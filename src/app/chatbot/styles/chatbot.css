@@ -1,0 +1,12 @@
+.typing {
+  width: 6px;
+  height: 6px;
+  background: white;
+  animation: blink 1s infinite;
+  border-radius: 50%;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 1; }
+}
