@@ -12,8 +12,9 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const headersList = headers(); // ✅ NOT async
-  const pathname = headersList.get('x-pathname') || ''; // ✅ Now valid
+  // 👇 Force TypeScript to treat as ReadonlyHeaders
+  const headersList = headers() as unknown as Headers;
+  const pathname = headersList.get('x-pathname') || '';
 
   const showNavbar = pathname !== '/chatbot';
 
