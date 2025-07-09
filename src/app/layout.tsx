@@ -12,7 +12,8 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const pathname = headers().get('x-pathname') || '';
+  const headersList = headers(); // ✅ NOT async
+  const pathname = headersList.get('x-pathname') || ''; // ✅ Now valid
 
   const showNavbar = pathname !== '/chatbot';
 
