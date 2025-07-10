@@ -1,25 +1,59 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import Image from 'next/image';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { signIn } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import api from '@/utils/api'; // ✅ Ensure this resolves to src/utils/api.ts
 
 export default function SignupPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Add your signup logic here
+    setError('');
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      console.log('📦 Sending signup request to backend:', {
+        name,
+        email,
+        password,
+      });
+
+      const response = await api.post('/auth/signup', {
+        name,
+        email,
+        password,
+      });
+
+      console.log('✅ Signup response:', response.data);
+
+      if (response.status === 200 || response.status === 201) {
+        router.push('/login');
+      }
+    } catch (err: any) {
+      console.error('❌ Signup error:', err);
+      setError(err?.response?.data?.detail || 'Signup failed');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-black relative overflow-hidden px-4">
-      {/* Cyberpunk background */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         <div className="w-full h-full bg-[radial-gradient(circle_at_1px_1px,_#38bdf811_1px,_transparent_0)] [background-size:16px_16px] opacity-10" />
         <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 via-purple-800/10 to-black" />
@@ -67,11 +101,13 @@ export default function SignupPage() {
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
           />
+          {error && <p className="text-red-500 text-sm">{error}</p>}
           <button
             type="submit"
-            className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded transition hover:shadow-[0_0_10px_#38bdf8]"
+            disabled={loading}
+            className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded transition hover:shadow-[0_0_10px_#38bdf8] disabled:opacity-50"
           >
-            Sign Up
+            {loading ? 'Signing up...' : 'Sign Up'}
           </button>
         </form>
 
@@ -89,7 +125,7 @@ export default function SignupPage() {
         </div>
 
         <button
-          onClick={() => signIn('google')}
+          onClick={() => alert('Google signup coming soon!')}
           className="flex items-center justify-center gap-3 w-full py-2 border border-white/30 rounded bg-white/10 hover:bg-white/20 transition"
         >
           <Image src="/google-icon.png" alt="Google" width={20} height={20} />

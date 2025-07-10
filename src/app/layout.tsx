@@ -7,13 +7,12 @@ export const metadata = {
   description: 'Futuristic AI-powered construction platform',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // 👇 Force TypeScript to treat as ReadonlyHeaders
-  const headersList = headers() as unknown as Headers;
+  const headersList = await headers();
   const pathname = headersList.get('x-pathname') || '';
 
   const showNavbar = pathname !== '/chatbot';

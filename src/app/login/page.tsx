@@ -1,18 +1,37 @@
 'use client';
 
-import { signIn } from 'next-auth/react';
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
+import api from '@/utils/api'; // ✅ Corrected import (no curly braces)
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Add actual sign-in logic if needed
+    setError('');
+    setLoading(true);
+
+    try {
+      const response = await api.post('/auth/login', { email, password });
+
+      if (response.status === 200) {
+        // ✅ Optional: store token or user info
+        // localStorage.setItem('token', response.data.token);
+        router.push('/dashboard'); // Redirect on success
+      }
+    } catch (err: any) {
+      setError(err?.response?.data?.detail || 'Login failed');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -49,11 +68,13 @@ export default function LoginPage() {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
+          {error && <p className="text-red-500 text-sm">{error}</p>}
           <button
             type="submit"
-            className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded transition hover:shadow-[0_0_10px_#38bdf8]"
+            className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded transition hover:shadow-[0_0_10px_#38bdf8] disabled:opacity-50"
+            disabled={loading}
           >
-            Login
+            {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
 
@@ -71,7 +92,7 @@ export default function LoginPage() {
         </div>
 
         <button
-          onClick={() => signIn('google')}
+          onClick={() => alert('Google login coming soon!')}
           className="flex items-center justify-center gap-3 w-full py-2 border border-white/30 rounded bg-white/10 hover:bg-white/20 transition"
         >
           <Image src="/google-icon.png" alt="Google" width={20} height={20} />
