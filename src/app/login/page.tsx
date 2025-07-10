@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import api from '@/utils/api'; // ✅ Corrected import (no curly braces)
+import api from '@/utils/api';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -23,9 +23,7 @@ export default function LoginPage() {
       const response = await api.post('/auth/login', { email, password });
 
       if (response.status === 200) {
-        // ✅ Optional: store token or user info
-        // localStorage.setItem('token', response.data.token);
-        router.push('/dashboard'); // Redirect on success
+        router.push('/dashboard');
       }
     } catch (err: any) {
       setError(err?.response?.data?.detail || 'Login failed');
@@ -69,12 +67,21 @@ export default function LoginPage() {
             required
           />
           {error && <p className="text-red-500 text-sm">{error}</p>}
+
           <button
             type="submit"
             className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded transition hover:shadow-[0_0_10px_#38bdf8] disabled:opacity-50"
             disabled={loading}
           >
-            {loading ? 'Logging in...' : 'Login'}
+            {loading ? (
+              <div className="flex items-center justify-center gap-1">
+                <div className="w-2 h-2 bg-white rounded-full animate-bounce [animation-delay:-0.3s]" />
+                <div className="w-2 h-2 bg-white rounded-full animate-bounce [animation-delay:-0.15s]" />
+                <div className="w-2 h-2 bg-white rounded-full animate-bounce" />
+              </div>
+            ) : (
+              'Login'
+            )}
           </button>
         </form>
 
