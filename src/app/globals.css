@@ -1,7 +1,84 @@
 @import "tailwindcss";
 
+/* 🌌 Global Base Styling */
 body {
   background-color: transparent;
   color: white;
-  font-family: sans-serif;
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ✅ Custom Dropdown Styling */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  background-color: rgba(15, 23, 42, 0.8); /* dark blueish-gray */
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 0.5rem;
+  padding: 0.5rem 2.5rem 0.5rem 0.75rem;
+  font-size: 1rem;
+
+  background-image: url("data:image/svg+xml,%3Csvg fill='white' viewBox='0 0 24 24' width='20' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1rem;
+}
+
+/* 🔵 Focus Ring for Select */
+select:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #38bdf8;
+  background-color: rgba(15, 23, 42, 0.95);
+}
+
+/* 🧹 Remove extra arrows in IE/Edge */
+select::-ms-expand {
+  display: none;
+}
+
+/* 🚫 Hide arrows from number input (Chrome, Safari, Edge) */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* 🚫 Hide arrows from number input (Firefox) */
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* 🌀 Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background-color: #38bdf8aa;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: #38bdf8;
+}
+
+/* ✨ Smooth fade-in */
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-in-out both;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

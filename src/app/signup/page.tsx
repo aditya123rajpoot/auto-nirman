@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import api from '@/utils/api'; // ✅ Ensure this resolves to src/utils/api.ts
+import api from '@/utils/api';
 
 export default function SignupPage() {
   const [name, setName] = useState('');
@@ -27,25 +27,17 @@ export default function SignupPage() {
 
     setLoading(true);
     try {
-      console.log('📦 Sending signup request to backend:', {
-        name,
-        email,
-        password,
-      });
-
       const response = await api.post('/auth/signup', {
         name,
         email,
         password,
       });
 
-      console.log('✅ Signup response:', response.data);
-
       if (response.status === 200 || response.status === 201) {
         router.push('/login');
       }
     } catch (err: any) {
-      console.error('❌ Signup error:', err);
+      console.error('Signup error:', err);
       setError(err?.response?.data?.detail || 'Signup failed');
     } finally {
       setLoading(false);
@@ -102,12 +94,21 @@ export default function SignupPage() {
             required
           />
           {error && <p className="text-red-500 text-sm">{error}</p>}
+
           <button
             type="submit"
             disabled={loading}
             className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded transition hover:shadow-[0_0_10px_#38bdf8] disabled:opacity-50"
           >
-            {loading ? 'Signing up...' : 'Sign Up'}
+            {loading ? (
+              <div className="flex items-center justify-center gap-1">
+                <div className="w-2 h-2 bg-white rounded-full animate-bounce [animation-delay:-0.3s]" />
+                <div className="w-2 h-2 bg-white rounded-full animate-bounce [animation-delay:-0.15s]" />
+                <div className="w-2 h-2 bg-white rounded-full animate-bounce" />
+              </div>
+            ) : (
+              'Sign Up'
+            )}
           </button>
         </form>
 

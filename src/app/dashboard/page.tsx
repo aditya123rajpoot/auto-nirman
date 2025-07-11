@@ -18,8 +18,12 @@ const features = [
   { icon: FaProjectDiagram, title: '3D Map Generator', route: '/map3d' },
   { icon: FaGavel, title: 'Legal Verification', route: '/legal' },
   { icon: FaHome, title: 'Sale/Buy Property', route: '/property' },
-  { icon: FaBuilding, title: 'Smart Construction Planner', route: '/planner' },
-  { icon: FaUser, title: 'User', route: '/user' }, // 👈 New User Feature
+  {
+    icon: FaBuilding,
+    title: 'Smart Construction Planner',
+    route: '/dashboard/smart-construction-planner', // ✅ Corrected Route
+  },
+  { icon: FaUser, title: 'User', route: '/user' },
 ];
 
 export default function Dashboard() {
@@ -36,7 +40,7 @@ export default function Dashboard() {
         Dashboard Features
       </h2>
 
-      {/* Cards */}
+      {/* Feature Cards */}
       <div className="relative z-10 grid grid-cols-2 sm:grid-cols-3 gap-8">
         {features.map((feature, idx) => (
           <motion.div
