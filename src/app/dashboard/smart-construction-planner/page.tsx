@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { sendLayoutRequest } from '@/lib/api';
 import { FaDraftingCompass } from 'react-icons/fa';
 import { cleanSmartLayoutResponse } from '@/utils/cleanSmartLayoutResponse';
-import FormattedJSONView from '@/components/FormattedJSONView';
+import { useRouter } from 'next/navigation';
 
 const initialForm = {
   total_builtup_area: 2400,
@@ -19,8 +19,8 @@ const initialForm = {
 export default function SmartConstructionPlannerPage() {
   const [formData, setFormData] = useState(initialForm);
   const [loading, setLoading] = useState(false);
-  const [response, setResponse] = useState<any[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   const handleChange = (name: string, value: string | number) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -29,11 +29,11 @@ export default function SmartConstructionPlannerPage() {
   const handleSubmit = async () => {
     setLoading(true);
     setError(null);
-    setResponse(null);
     try {
       const res = await sendLayoutRequest({ ...formData });
       const cleaned = cleanSmartLayoutResponse(res.plan_sections || []);
-      setResponse(cleaned);
+      const encoded = encodeURIComponent(JSON.stringify(cleaned));
+      router.push(`/dashboard/smart-construction-output?data=${encoded}`);
     } catch (err: any) {
       setError(err.message || 'Something went wrong');
     } finally {
@@ -53,45 +53,12 @@ export default function SmartConstructionPlannerPage() {
         </h1>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 bg-white/5 p-6 rounded-xl backdrop-blur border border-white/10">
-          <CustomNumberInput
-            label="Total Built-up Area (sq ft)"
-            name="total_builtup_area"
-            value={formData.total_builtup_area}
-            onChange={handleChange}
-          />
-          <CustomNumberInput
-            label="Number of Floors"
-            name="number_of_floors"
-            value={formData.number_of_floors}
-            onChange={handleChange}
-          />
-          <CustomDropdown
-            label="Plot Shape"
-            name="shape_of_plot"
-            value={formData.shape_of_plot}
-            onChange={handleChange}
-            options={['Rectangular', 'Square', 'L-shaped', 'Irregular']}
-          />
-          <TextInput
-            label="Your City"
-            name="your_city"
-            value={formData.your_city}
-            onChange={handleChange}
-          />
-          <CustomDropdown
-            label="City Weather"
-            name="weather_in_your_city"
-            value={formData.weather_in_your_city}
-            onChange={handleChange}
-            options={['Hot and Dry', 'Cold', 'Humid', 'Moderate']}
-          />
-          <CustomDropdown
-            label="Do you follow Vastu?"
-            name="do_you_follow_vastu"
-            value={formData.do_you_follow_vastu}
-            onChange={handleChange}
-            options={['Yes', 'No']}
-          />
+          <CustomNumberInput label="Total Built-up Area (sq ft)" name="total_builtup_area" value={formData.total_builtup_area} onChange={handleChange} />
+          <CustomNumberInput label="Number of Floors" name="number_of_floors" value={formData.number_of_floors} onChange={handleChange} />
+          <CustomDropdown label="Plot Shape" name="shape_of_plot" value={formData.shape_of_plot} onChange={handleChange} options={['Rectangular', 'Square', 'L-shaped', 'Irregular']} />
+          <TextInput label="Your City" name="your_city" value={formData.your_city} onChange={handleChange} />
+          <CustomDropdown label="City Weather" name="weather_in_your_city" value={formData.weather_in_your_city} onChange={handleChange} options={['Hot and Dry', 'Cold', 'Humid', 'Moderate']} />
+          <CustomDropdown label="Do you follow Vastu?" name="do_you_follow_vastu" value={formData.do_you_follow_vastu} onChange={handleChange} options={['Yes', 'No']} />
         </div>
 
         <div className="text-center mt-8">
@@ -114,11 +81,7 @@ export default function SmartConstructionPlannerPage() {
                 <>
                   <svg className="w-6 h-6 animate-spin text-white" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                    />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
                   </svg>
                   Generating Layout...
                 </>
@@ -130,24 +93,6 @@ export default function SmartConstructionPlannerPage() {
             </span>
           </motion.button>
         </div>
-
-        {response && (
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mt-12 bg-white/10 p-6 rounded-xl border border-white/10"
-          >
-            <h2 className="text-2xl font-semibold text-cyan-400 mb-4">Generated Plan</h2>
-            {response.map((section, idx) => (
-              <FormattedJSONView
-                key={idx}
-                title={section.title}
-                content={section.content}
-                note={section.note}
-              />
-            ))}
-          </motion.div>
-        )}
 
         {error && <div className="mt-6 text-red-400 text-center text-sm">{error}</div>}
       </div>

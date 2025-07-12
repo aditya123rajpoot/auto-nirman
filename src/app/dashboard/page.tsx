@@ -11,6 +11,7 @@ import {
   FaProjectDiagram,
   FaUser,
 } from 'react-icons/fa';
+import { useState } from 'react';
 
 const features = [
   { icon: FaRobot, title: 'AI Chatbot', route: '/chatbot' },
@@ -21,13 +22,21 @@ const features = [
   {
     icon: FaBuilding,
     title: 'Smart Construction Planner',
-    route: '/dashboard/smart-construction-planner', // ✅ Corrected Route
+    route: '/dashboard/smart-construction-planner',
   },
   { icon: FaUser, title: 'User', route: '/user' },
 ];
 
 export default function Dashboard() {
   const router = useRouter();
+  const [isNavigating, setIsNavigating] = useState(false);
+
+  const handleNavigation = (route: string) => {
+    setIsNavigating(true);
+    setTimeout(() => {
+      router.push(route);
+    }, 200); // small delay for visual feedback
+  };
 
   return (
     <div className="relative min-h-screen pt-20 px-4 bg-black text-white font-sans overflow-hidden">
@@ -46,7 +55,8 @@ export default function Dashboard() {
           <motion.div
             key={idx}
             whileHover={{ scale: 1.05 }}
-            onClick={() => router.push(feature.route)}
+            whileTap={{ scale: 0.95, opacity: 0.8 }}
+            onClick={() => handleNavigation(feature.route)}
             className="cursor-pointer bg-white/5 backdrop-blur-lg border border-white/10 hover:border-blue-400 hover:shadow-[0_0_15px_#38bdf8aa] transition-all rounded-xl p-4 sm:p-5 flex flex-col items-center text-center animate-fade-in"
           >
             <feature.icon className="text-4xl mb-3 text-blue-400 drop-shadow-md" />

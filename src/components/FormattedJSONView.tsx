@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaChevronDown, FaChevronRight } from 'react-icons/fa';
+import { jsonToReadableLines } from '@/utils/jsonToReadableLines';
 
 interface Props {
   title: string;
@@ -12,6 +13,7 @@ interface Props {
 
 const FormattedJSONView = ({ title, content, note }: Props) => {
   const [open, setOpen] = useState(true);
+  const lines = jsonToReadableLines(content);
 
   return (
     <div className="bg-[#141414] border border-cyan-500/40 rounded-xl p-4 mb-4 shadow-[0_0_20px_#06b6d4] transition-all duration-300">
@@ -34,9 +36,9 @@ const FormattedJSONView = ({ title, content, note }: Props) => {
             className="text-sm text-gray-300 whitespace-pre-wrap"
           >
             <pre className="overflow-auto text-[13px] leading-relaxed">
-              {typeof content === 'string'
-                ? content
-                : JSON.stringify(content, null, 2)}
+              {lines.map((line: string, index: number) => (
+                <div key={index}>{line}</div>
+              ))}
             </pre>
             {note && <p className="mt-2 italic text-cyan-400">{note}</p>}
           </motion.div>
