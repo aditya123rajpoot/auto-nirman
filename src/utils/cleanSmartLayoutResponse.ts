@@ -32,43 +32,49 @@ const getNormalizedTitle = (title: string) => {
 
 const fixInvalidJSON = (data: any): any => {
   try {
-    if (typeof data === 'string') {
-      let str = data.trim();
+    if (typeof data !== 'string') return data;
 
-      // ✅ Remove prefix like "Here is the JSON response:"
-      str = str.replace(/^here is (the )?json( output)?( response)?\s*[:\-]?\s*/i, '');
+    let str = data.trim();
 
-      // ✅ Match code block
-      const codeBlockMatch = str.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
-      let jsonPart = '';
-      let notePart = '';
+    // ✅ Remove known prefaces
+    str = str.replace(
+      /^(here( is|’?s)?|this is|below is|following is)?( the)?\s*(json|architectural)?\s*(response|output|design)?\s*[:\-]?\s*/i,
+      ''
+    );
 
-      if (codeBlockMatch) {
-        jsonPart = codeBlockMatch[1].trim();
-        notePart = str.split(codeBlockMatch[0])[1]?.trim() || '';
+    // ✅ Extract content inside code block if present
+    const codeBlockMatch = str.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+    let jsonPart = '';
+    let notePart = '';
+
+    if (codeBlockMatch) {
+      jsonPart = codeBlockMatch[1].trim();
+      notePart = str.split(codeBlockMatch[0])[1]?.trim() || '';
+    } else {
+      // fallback: split at first {
+      const index = str.indexOf('{');
+      if (index !== -1) {
+        jsonPart = str.slice(index).trim();
+        notePart = str.slice(0, index).trim();
       } else {
-        // fallback: split on first {
-        const index = str.indexOf('{');
-        if (index !== -1) {
-          jsonPart = str.slice(index).trim();
-          notePart = str.slice(0, index).trim();
-        } else {
-          return data;
-        }
+        return { _note: str }; // fully fallback
       }
-
-      const cleaned = jsonPart
-        .replace(/(\w+):/g, '"$1":') // Quote keys
-        .replace(/,\s*}/g, '}')      // Remove trailing commas
-        .replace(/,\s*]/g, ']')      //
-        .replace(/(\d+)\s*(sq ft|sqft|sqm|sq\.? m|ft|cars?)/gi, '"$1 $2"'); // Wrap units
-
-      const parsed = JSON.parse(cleaned);
-      return notePart ? { ...parsed, _note: notePart } : parsed;
     }
 
-    return data;
-  } catch {
-    return data;
+    // ✅ Preprocess JSON-like string
+    const cleaned = jsonPart
+      .replace(/(\w[\w\s]*?):/g, (_, key) => `"${key.trim()}":`) // Quote all keys
+      .replace(/,\s*([}\]])/g, '$1') // Remove trailing commas
+      .replace(/:\s*([0-9]+(?:\s*(sq ft|sqft|sqm|ft|cars?|nos|m2|m|x|×)[^",}]*)?)/gi, (match, val) => {
+        return `: "${val.trim()}"`;
+      }) // Wrap values like 300 sq ft in quotes
+      .replace(/“|”/g, '"'); // Replace smart quotes with regular quotes
+
+    const parsed = JSON.parse(cleaned);
+
+    return notePart ? { ...parsed, _note: notePart } : parsed;
+  } catch (err) {
+    console.error('🛑 Failed to parse:', err);
+    return { _note: typeof data === 'string' ? data : JSON.stringify(data) };
   }
 };
