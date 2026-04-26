@@ -9,6 +9,17 @@ const handler = NextAuth({
     }),
   ],
   secret: process.env.NEXTAUTH_SECRET,
+  pages: {
+    signIn: '/login',
+  },
+  callbacks: {
+    async session({ session, token }) {
+      return session;
+    },
+    async redirect({ url, baseUrl }) {
+      return baseUrl + '/dashboard';
+    },
+  },
 });
 
 export { handler as GET, handler as POST };
