@@ -17,24 +17,35 @@ export async function POST(req: NextRequest) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "llama3-70b-8192",
+        model: "llama-3.3-70b-versatile",
         messages: [{ role: "user", content: message }],
         temperature: 0.7,
       }),
     });
 
-    const data = await groqRes.json();
-    console.log("📦 Groq raw response:", JSON.stringify(data));
+    const rawText = await groqRes.text();
+    const contentType = groqRes.headers.get("content-type") || "";
+    const isJsonResponse = contentType.includes("application/json");
+    const data = isJsonResponse ? JSON.parse(rawText) : null;
+
+    console.log("📦 Groq raw response:", isJsonResponse ? JSON.stringify(data) : rawText.slice(0, 300));
 
     if (!groqRes.ok) {
-      console.error("❌ Groq error:", data);
-      return NextResponse.json({ response: data?.error?.message || "Unknown error" }, { status: 500 });
+      console.error("❌ Groq error:", isJsonResponse ? data : rawText);
+      return NextResponse.json(
+        {
+          response: isJsonResponse
+            ? data?.error?.message || "Unknown Groq error"
+            : "Groq returned a non-JSON error response.",
+        },
+        { status: 500 }
+      );
     }
 
     const content = data?.choices?.[0]?.message?.content;
 
     if (!content) {
-      return NextResponse.json({ response: "⚠️ No reply from LLaMA 3" }, { status: 200 });
+      return NextResponse.json({ response: "⚠️ No reply from Groq model" }, { status: 200 });
     }
 
     return NextResponse.json({ response: content });

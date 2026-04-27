@@ -45,8 +45,15 @@ export default function ChatWindow() {
         body: JSON.stringify({ message: userMessage.text }),
       });
 
-      const data = await res.json();
-      const botReply = data?.response || "⚠️ No response received.";
+      const rawText = await res.text();
+      let botReply = "⚠️ No response received.";
+
+      try {
+        const data = JSON.parse(rawText);
+        botReply = data?.response || botReply;
+      } catch {
+        botReply = res.ok ? rawText || botReply : "❌ Chat service returned an invalid response";
+      }
 
       // Insert empty bot message to animate into
       setMessages((prev) => [...prev, { text: "", type: "bot" }]);

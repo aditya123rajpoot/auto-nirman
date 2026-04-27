@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import CleanOutput from '@/components/CleanOutput';
 import { motion } from 'framer-motion';
 
+
 export default function SmartConstructionOutputPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
