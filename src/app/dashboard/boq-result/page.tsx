@@ -149,7 +149,7 @@ export default function BOQResultsPage() {
       <div className="relative z-10 max-w-5xl mx-auto">
 
         {/* Back button */}
-        <button onClick={() => router.push('/boq')}
+        <button onClick={() => router.push('/dashboard/boq-upload')}
           className="flex items-center gap-2 text-slate-500 hover:text-white transition-colors text-sm mb-6">
           <FaArrowLeft size={12} /> Back to Upload
         </button>

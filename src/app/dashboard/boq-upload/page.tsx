@@ -139,10 +139,10 @@ export default function BOQUploadPage() {
 
       if (!res.ok) throw new Error('Analysis failed');
       const data = await res.json();
-      router.push(`/boq/results?jobId=${data.jobId}`);
+      router.push(`/dashboard/boq-result?jobId=${data.jobId}`);
     } catch (err) {
       // For demo — redirect to results with mock data
-      router.push(`/boq/results?demo=true&project=${encodeURIComponent(projectName)}&value=${projectValue}&city=${encodeURIComponent(city)}&type=${encodeURIComponent(projectType)}`);
+      router.push(`/dashboard/boq-result?demo=true&project=${encodeURIComponent(projectName)}&value=${projectValue}&city=${encodeURIComponent(city)}&type=${encodeURIComponent(projectType)}`);
     }
   };
 
