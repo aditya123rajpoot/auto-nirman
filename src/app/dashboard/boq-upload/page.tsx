@@ -332,7 +332,7 @@ export default function BOQUploadPage() {
               {[
                 { value: '<5 min', label: 'Analysis time' },
                 { value: '95%', label: 'Accuracy rate' },
-                { value: '₹1Cr+', label: 'Avg savings' },
+                { value: '10%+', label: 'Avg savings' },
                 { value: '12', label: 'Detection modules' },
               ].map((stat, i) => (
                 <div key={i} className="bg-white/3 border border-white/8 rounded-xl p-3 text-center">

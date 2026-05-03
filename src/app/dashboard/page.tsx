@@ -16,6 +16,7 @@ const features = [
   { icon: FaGavel,          title: 'Legal Verification',          route: '/legal',                               ready: false },
   { icon: FaHome,           title: 'Sale/Buy Property',           route: '/property',                            ready: false },
   { icon: FaBuilding,       title: 'Smart Construction Planner',  route: '/dashboard/smart-construction-planner', ready: false },
+  { icon: FaBuilding,       title: 'BOQ Analysis',                route: '/dashboard/boq-upload',                ready: true  },
   { icon: FaUser,           title: 'User',                        route: '/user',                                ready: true  },
 ];
 
