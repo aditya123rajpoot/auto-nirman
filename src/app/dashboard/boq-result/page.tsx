@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -147,7 +147,7 @@ export default function BOQResultsPage() {
     return lines;
   };
 
-  const downloadPdfReport = () => {
+  const downloadPdfReport = useCallback(() => {
     if (!result) return;
 
     const reportLines = [
@@ -237,19 +237,17 @@ export default function BOQResultsPage() {
     link.click();
     link.remove();
     URL.revokeObjectURL(url);
-  };
+  }, [result]);
 
   useEffect(() => {
     const isDemo = params.get('demo') === 'true';
     if (isDemo) {
-      setTimeout(() => {
-        setResult(generateMockResult(
-          params.get('project') || 'Sample Project',
-          params.get('value') || '50',
-          params.get('city') || 'Lucknow',
-          params.get('type') || 'Residential',
-        ));
-      }, 500);
+      setResult(generateMockResult(
+        params.get('project') || 'Sample Project',
+        params.get('value') || '50',
+        params.get('city') || 'Lucknow',
+        params.get('type') || 'Residential',
+      ));
     }
     // For real: fetch `/api/boq/results?jobId=...`
   }, [params]);
