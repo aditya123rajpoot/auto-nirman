@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -117,12 +117,21 @@ export default function BOQUploadPage() {
       { label: 'Preparing report...', pct: 100 },
     ];
 
-    // Animate progress steps
-    for (const step of steps) {
-      setProgressLabel(step.label);
-      setProgress(step.pct);
-      await new Promise(r => setTimeout(r, 600));
-    }
+    let progressTimer: ReturnType<typeof setInterval> | null = null;
+    let currentStep = 0;
+
+    setProgressLabel(steps[0].label);
+    setProgress(steps[0].pct);
+    progressTimer = setInterval(() => {
+      currentStep = Math.min(currentStep + 1, steps.length - 1);
+      setProgressLabel(steps[currentStep].label);
+      setProgress(steps[currentStep].pct);
+
+      if (currentStep === steps.length - 1 && progressTimer) {
+        clearInterval(progressTimer);
+        progressTimer = null;
+      }
+    }, 350);
 
     try {
       const formData = new FormData();
@@ -139,9 +148,15 @@ export default function BOQUploadPage() {
 
       if (!res.ok) throw new Error('Analysis failed');
       const data = await res.json();
+      if (progressTimer) clearInterval(progressTimer);
+      setProgressLabel('Preparing report...');
+      setProgress(100);
       router.push(`/dashboard/boq-result?jobId=${data.jobId}`);
     } catch (err) {
-      // For demo — redirect to results with mock data
+      if (progressTimer) clearInterval(progressTimer);
+      setProgressLabel('Preparing report...');
+      setProgress(100);
+      // For demo â€” redirect to results with mock data
       router.push(`/dashboard/boq-result?demo=true&project=${encodeURIComponent(projectName)}&value=${projectValue}&city=${encodeURIComponent(city)}&type=${encodeURIComponent(projectType)}`);
     }
   };
@@ -176,7 +191,7 @@ export default function BOQUploadPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
 
-          {/* LEFT — Upload + Project Details */}
+          {/* LEFT â€” Upload + Project Details */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -299,7 +314,7 @@ export default function BOQUploadPage() {
             </AnimatePresence>
           </motion.div>
 
-          {/* RIGHT — Info + Submit */}
+          {/* RIGHT â€” Info + Submit */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -345,7 +360,7 @@ export default function BOQUploadPage() {
             {/* Privacy note */}
             <div className="bg-white/3 border border-white/8 rounded-xl p-4">
               <p className="text-xs text-slate-500 leading-relaxed">
-                🔒 <span className="text-slate-400 font-semibold">Your data is secure.</span> BOQ files are encrypted in transit, analysed in an isolated environment, and never shared. Files are deleted after 30 days.
+                ðŸ”’ <span className="text-slate-400 font-semibold">Your data is secure.</span> BOQ files are encrypted in transit, analysed in an isolated environment, and never shared. Files are deleted after 30 days.
               </p>
             </div>
 

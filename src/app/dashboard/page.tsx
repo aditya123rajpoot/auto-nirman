@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -37,7 +37,7 @@ export default function Dashboard() {
       setComingSoon(feature.title);
       return;
     }
-    setTimeout(() => router.push(feature.route), 200);
+    router.push(feature.route);
   };
 
   return (
@@ -97,7 +97,7 @@ export default function Dashboard() {
               onClick={e => e.stopPropagation()}
               className="bg-[#0f172a] border border-white/10 rounded-2xl p-8 max-w-sm w-full text-center shadow-[0_0_40px_#38bdf822]"
             >
-              <div className="text-5xl mb-4">🚧</div>
+              <div className="text-5xl mb-4">ðŸš§</div>
               <h2 className="text-xl font-semibold mb-2">{comingSoon}</h2>
               <p className="text-slate-400 text-sm mb-6">
                 This feature is under development and will be available soon.
