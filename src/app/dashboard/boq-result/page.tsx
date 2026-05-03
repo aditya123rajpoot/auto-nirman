@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -9,7 +9,7 @@ import {
   FaShieldAlt, FaBolt, FaFileAlt, FaInfoCircle
 } from 'react-icons/fa';
 
-// ── Mock analysis result for demo ──
+// â”€â”€ Mock analysis result for demo â”€â”€
 function generateMockResult(projectName: string, valueStr: string, city: string, type: string) {
   const value = parseFloat(valueStr) || 50;
   const leakagePct = 0.032 + Math.random() * 0.025;
@@ -35,9 +35,9 @@ function generateMockResult(projectName: string, valueStr: string, city: string,
         severity: 'HIGH',
         module: 'Rate Deviation',
         headline: `M25 RCC rate inflated by 34% vs CPWD benchmark`,
-        description: `Submitted rate of ₹8,240/cum against CPWD DSR 2023 benchmark of ₹6,150/cum for ${city} region. Deviation of 34% exceeds the 25% threshold.`,
+        description: `Submitted rate of â‚¹8,240/cum against CPWD DSR 2023 benchmark of â‚¹6,150/cum for ${city} region. Deviation of 34% exceeds the 25% threshold.`,
         exposureCr: (leakageINR * 0.38).toFixed(2),
-        recommendation: 'Negotiate rate down to ₹6,500-7,000/cum. Request contractor to justify premium with material cost breakup.',
+        recommendation: 'Negotiate rate down to â‚¹6,500-7,000/cum. Request contractor to justify premium with material cost breakup.',
         confidence: 'HIGH',
       },
       {
@@ -74,10 +74,10 @@ function generateMockResult(projectName: string, valueStr: string, city: string,
         id: 'F005',
         severity: 'LOW',
         module: 'Contingency Inflation',
-        headline: `Provisional sum items represent 4.8% of BOQ — above 3% threshold`,
+        headline: `Provisional sum items represent 4.8% of BOQ â€” above 3% threshold`,
         description: `Total lump-sum and provisional items account for 4.8% of BOQ value without detailed breakdown. These create discretionary spending risk post-contract.`,
         exposureCr: (leakageINR * 0.05).toFixed(2),
-        recommendation: 'Require detailed breakdown for all LS items >₹5 lakh. Convert provisional sums to measured items wherever possible.',
+        recommendation: 'Require detailed breakdown for all LS items >â‚¹5 lakh. Convert provisional sums to measured items wherever possible.',
         confidence: 'MEDIUM',
       },
     ],
@@ -90,7 +90,7 @@ function generateMockResult(projectName: string, valueStr: string, city: string,
       { module: 'Scope Manipulation', score: 22, weight: '5%', items: 1 },
       { module: 'Stage Imbalance', score: 31, weight: '5%', items: 2 },
     ],
-    executiveSummary: `Our AI analysis of the submitted BOQ identifies ₹${leakageINR.toFixed(2)} crore in probable leakage exposure across ${Math.floor(18 + Math.random() * 10)} flagged line items. The most significant concern is a systematic rate inflation pattern in structural works combined with a front-loading distribution, which is consistent with contractor behavior patterns observed in similar ${city}-region tenders. We recommend withholding contract execution until flagged items are renegotiated.`,
+    executiveSummary: `Our AI analysis of the submitted BOQ identifies â‚¹${leakageINR.toFixed(2)} crore in probable leakage exposure across ${Math.floor(18 + Math.random() * 10)} flagged line items. The most significant concern is a systematic rate inflation pattern in structural works combined with a front-loading distribution, which is consistent with contractor behavior patterns observed in similar ${city}-region tenders. We recommend withholding contract execution until flagged items are renegotiated.`,
   };
 }
 
@@ -114,6 +114,130 @@ export default function BOQResultsPage() {
   const [result, setResult] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'summary' | 'findings' | 'modules'>('summary');
   const [expandedFinding, setExpandedFinding] = useState<string | null>(null);
+
+  const cleanPdfText = (value: unknown) =>
+    String(value ?? '')
+      .replace(/â‚¹/g, 'Rs.')
+      .replace(/[?]/g, 'Rs.')
+      .replace(/[–—]/g, '-')
+      .replace(/[•]/g, '-')
+      .replace(/[^\x20-\x7E]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+  const escapePdfText = (value: string) =>
+    cleanPdfText(value).replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
+
+  const wrapPdfLine = (text: string, maxLength = 88) => {
+    const words = cleanPdfText(text).split(' ');
+    const lines: string[] = [];
+    let current = '';
+
+    for (const word of words) {
+      const next = current ? `${current} ${word}` : word;
+      if (next.length > maxLength) {
+        if (current) lines.push(current);
+        current = word;
+      } else {
+        current = next;
+      }
+    }
+
+    if (current) lines.push(current);
+    return lines;
+  };
+
+  const downloadPdfReport = () => {
+    if (!result) return;
+
+    const reportLines = [
+      'Auto Nirman - BOQ Analysis Report',
+      `Project: ${result.projectName}`,
+      `Location: ${result.city}`,
+      `Project Type: ${result.projectType}`,
+      `Project Value: Rs.${result.projectValueCr} Crore`,
+      '',
+      `Risk Level: ${result.riskLevel}`,
+      `Risk Score: ${result.riskScore}/100`,
+      `Confidence: ${result.confidenceScore}%`,
+      `Benchmark: ${result.benchmarkSource}`,
+      '',
+      `Total Leakage: Rs.${result.totalLeakageCr} Cr`,
+      `Leakage: ${result.leakagePct}%`,
+      `Items Flagged: ${result.itemsFlagged}`,
+      `Items Analysed: ${result.lineItemsAnalyzed}`,
+      '',
+      'Executive Summary',
+      ...wrapPdfLine(result.executiveSummary),
+      '',
+      'Key Findings',
+      ...result.findings.flatMap((finding: any, index: number) => [
+        `${index + 1}. [${finding.severity}] ${finding.headline}`,
+        ...wrapPdfLine(`Module: ${finding.module}`),
+        ...wrapPdfLine(`Exposure: Rs.${finding.exposureCr} Cr`),
+        ...wrapPdfLine(`Description: ${finding.description}`),
+        ...wrapPdfLine(`Recommendation: ${finding.recommendation}`),
+        '',
+      ]),
+      'Module Scores',
+      ...result.moduleScores.map((module: any) => `${module.module}: ${module.score}/100, Weight ${module.weight}, Items ${module.items}`),
+    ];
+
+    const pageHeight = 792;
+    const margin = 54;
+    const lineHeight = 15;
+    const maxLinesPerPage = Math.floor((pageHeight - margin * 2) / lineHeight);
+    const pages: string[][] = [];
+
+    for (let i = 0; i < reportLines.length; i += maxLinesPerPage) {
+      pages.push(reportLines.slice(i, i + maxLinesPerPage));
+    }
+
+    const objects: string[] = [''];
+    objects.push('<< /Type /Catalog /Pages 2 0 R >>');
+    objects.push(`<< /Type /Pages /Kids [${pages.map((_, i) => `${3 + i * 2} 0 R`).join(' ')}] /Count ${pages.length} >>`);
+
+    pages.forEach((pageLines, pageIndex) => {
+      const pageObjectNumber = 3 + pageIndex * 2;
+      const contentObjectNumber = pageObjectNumber + 1;
+      const content = [
+        'BT',
+        '/F1 11 Tf',
+        '54 738 Td',
+        ...pageLines.map((line, lineIndex) => `${lineIndex === 0 ? '' : '0 -15 Td '}(${escapePdfText(line)}) Tj`),
+        'ET',
+      ].join('\n');
+
+      objects.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> /Contents ${contentObjectNumber} 0 R >>`);
+      objects.push(`<< /Length ${content.length} >>\nstream\n${content}\nendstream`);
+    });
+
+    let pdf = '%PDF-1.4\n';
+    const offsets = [0];
+
+    for (let i = 1; i < objects.length; i += 1) {
+      offsets[i] = pdf.length;
+      pdf += `${i} 0 obj\n${objects[i]}\nendobj\n`;
+    }
+
+    const xrefOffset = pdf.length;
+    pdf += `xref\n0 ${objects.length}\n0000000000 65535 f \n`;
+    for (let i = 1; i < objects.length; i += 1) {
+      pdf += `${String(offsets[i]).padStart(10, '0')} 00000 n \n`;
+    }
+    pdf += `trailer\n<< /Size ${objects.length} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`;
+
+    const blob = new Blob([pdf], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const fileName = `${cleanPdfText(result.projectName).replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase() || 'boq-analysis'}-report.pdf`;
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
 
   useEffect(() => {
     const isDemo = params.get('demo') === 'true';
@@ -160,9 +284,9 @@ export default function BOQResultsPage() {
             <div>
               <p className="text-slate-500 text-xs uppercase tracking-widest mb-1">BOQ Analysis Report</p>
               <h1 className="text-3xl font-black text-white">{result.projectName}</h1>
-              <p className="text-slate-400 text-sm mt-1">{result.city} · {result.projectType} · ₹{result.projectValueCr} Crore</p>
+              <p className="text-slate-400 text-sm mt-1">{result.city} Â· {result.projectType} Â· â‚¹{result.projectValueCr} Crore</p>
             </div>
-            <button className="flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-cyan-400/30 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all">
+            <button onClick={downloadPdfReport} className="flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-cyan-400/30 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all">
               <FaDownload size={13} className="text-cyan-400" /> Download PDF Report
             </button>
           </div>
@@ -197,14 +321,14 @@ export default function BOQResultsPage() {
               <div>
                 <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">Risk Assessment</p>
                 <p className="text-2xl font-black" style={{ color: riskConfig.color }}>{riskConfig.label}</p>
-                <p className="text-slate-400 text-sm mt-1">Confidence: {result.confidenceScore}% · Based on {result.benchmarkSource}</p>
+                <p className="text-slate-400 text-sm mt-1">Confidence: {result.confidenceScore}% Â· Based on {result.benchmarkSource}</p>
               </div>
             </div>
 
             {/* Key numbers */}
             <div className="flex gap-4 flex-wrap">
               {[
-                { label: 'Total Leakage', value: `₹${result.totalLeakageCr} Cr`, color: riskConfig.color },
+                { label: 'Total Leakage', value: `â‚¹${result.totalLeakageCr} Cr`, color: riskConfig.color },
                 { label: 'Leakage %', value: `${result.leakagePct}%`, color: '#f59e0b' },
                 { label: 'Items Flagged', value: `${result.itemsFlagged}`, color: '#3b82f6' },
                 { label: 'Items Analysed', value: `${result.lineItemsAnalyzed}`, color: '#22c55e' },
@@ -250,11 +374,11 @@ export default function BOQResultsPage() {
 
               {/* Recommendation box */}
               <div className={`bg-gradient-to-br ${riskConfig.bg} border ${riskConfig.border} rounded-2xl p-6`}>
-                <h3 className="font-bold text-white mb-3">⚠ Recommended Action</h3>
+                <h3 className="font-bold text-white mb-3">âš  Recommended Action</h3>
                 <p className="text-slate-300 text-sm leading-relaxed">
                   {result.riskLevel === 'CRITICAL' || result.riskLevel === 'HIGH'
-                    ? `Do not sign this BOQ in its current form. Request rate justification for all items flagged with HIGH severity. Minimum recommended negotiation target: ₹${(parseFloat(result.totalLeakageCr) * 0.7).toFixed(2)} crore reduction before contract execution.`
-                    : `Proceed with caution. Address MEDIUM severity findings before finalizing contract. Estimated recoverable amount through negotiation: ₹${(parseFloat(result.totalLeakageCr) * 0.5).toFixed(2)} crore.`
+                    ? `Do not sign this BOQ in its current form. Request rate justification for all items flagged with HIGH severity. Minimum recommended negotiation target: â‚¹${(parseFloat(result.totalLeakageCr) * 0.7).toFixed(2)} crore reduction before contract execution.`
+                    : `Proceed with caution. Address MEDIUM severity findings before finalizing contract. Estimated recoverable amount through negotiation: â‚¹${(parseFloat(result.totalLeakageCr) * 0.5).toFixed(2)} crore.`
                   }
                 </p>
               </div>
@@ -269,14 +393,14 @@ export default function BOQResultsPage() {
                       <cfg.icon size={14} className={`${cfg.text} mt-0.5 shrink-0`} />
                       <div className="flex-1 min-w-0">
                         <p className="text-white text-sm font-semibold">{f.headline}</p>
-                        <p className={`${cfg.text} text-xs mt-0.5`}>Exposure: ₹{f.exposureCr} Cr · {f.module}</p>
+                        <p className={`${cfg.text} text-xs mt-0.5`}>Exposure: â‚¹{f.exposureCr} Cr Â· {f.module}</p>
                       </div>
                     </div>
                   );
                 })}
                 <button onClick={() => setActiveTab('findings')}
                   className="text-cyan-400 text-xs hover:text-cyan-300 transition-colors flex items-center gap-1">
-                  View all {result.findings.length} findings →
+                  View all {result.findings.length} findings â†’
                 </button>
               </div>
             </motion.div>
@@ -297,12 +421,12 @@ export default function BOQResultsPage() {
                         <div className="flex items-center gap-2 flex-wrap mb-1">
                           <span className={`text-xs font-bold px-2 py-0.5 rounded-full border ${cfg.bg} ${cfg.border} ${cfg.text}`}>{f.severity}</span>
                           <span className="text-slate-500 text-xs">{f.module}</span>
-                          <span className="text-slate-500 text-xs">· {f.id}</span>
+                          <span className="text-slate-500 text-xs">Â· {f.id}</span>
                         </div>
                         <p className="text-white text-sm font-semibold">{f.headline}</p>
-                        <p className={`${cfg.text} text-xs mt-1`}>₹{f.exposureCr} Cr exposure · Confidence: {f.confidence}</p>
+                        <p className={`${cfg.text} text-xs mt-1`}>â‚¹{f.exposureCr} Cr exposure Â· Confidence: {f.confidence}</p>
                       </div>
-                      <span className={`text-slate-600 text-lg transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>▾</span>
+                      <span className={`text-slate-600 text-lg transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>â–¾</span>
                     </button>
 
                     <AnimatePresence>
