@@ -1,12 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
   try {
     const { message } = await req.json();
-    console.log("🟢 Incoming user message:", message);
+    console.log("ðŸŸ¢ Incoming user message:", message);
 
     if (!process.env.GROQ_API_KEY) {
-      console.error("❌ Missing GROQ_API_KEY in environment");
+      console.error("âŒ Missing GROQ_API_KEY in environment");
       return NextResponse.json({ response: "Missing API Key" }, { status: 500 });
     }
 
@@ -18,8 +18,14 @@ export async function POST(req: NextRequest) {
       },
       body: JSON.stringify({
         model: "llama-3.3-70b-versatile",
-        messages: [{ role: "user", content: message }],
-        temperature: 0.7,
+        messages: [
+          {
+            role: "system",
+            content: "You are Auto Nirman AI, a premium construction intelligence assistant for India. Answer with polished, concise structure. Use short paragraphs, numbered lists when useful, and clear section labels. Focus on BOQ analysis, rates, construction planning, vendor risk, cost leakage, and practical next steps. Avoid generic encyclopedia-style answers. If the user input is unclear, ask one sharp clarification and suggest likely construction-related interpretations.",
+          },
+          { role: "user", content: message },
+        ],
+        temperature: 0.45,
       }),
     });
 
@@ -28,10 +34,10 @@ export async function POST(req: NextRequest) {
     const isJsonResponse = contentType.includes("application/json");
     const data = isJsonResponse ? JSON.parse(rawText) : null;
 
-    console.log("📦 Groq raw response:", isJsonResponse ? JSON.stringify(data) : rawText.slice(0, 300));
+    console.log("ðŸ“¦ Groq raw response:", isJsonResponse ? JSON.stringify(data) : rawText.slice(0, 300));
 
     if (!groqRes.ok) {
-      console.error("❌ Groq error:", isJsonResponse ? data : rawText);
+      console.error("âŒ Groq error:", isJsonResponse ? data : rawText);
       return NextResponse.json(
         {
           response: isJsonResponse
@@ -45,12 +51,12 @@ export async function POST(req: NextRequest) {
     const content = data?.choices?.[0]?.message?.content;
 
     if (!content) {
-      return NextResponse.json({ response: "⚠️ No reply from Groq model" }, { status: 200 });
+      return NextResponse.json({ response: "âš ï¸ No reply from Groq model" }, { status: 200 });
     }
 
     return NextResponse.json({ response: content });
   } catch (err: any) {
-    console.error("🔥 Server crash error:", err?.message || err);
-    return NextResponse.json({ response: "❌ Server error" }, { status: 500 });
+    console.error("ðŸ”¥ Server crash error:", err?.message || err);
+    return NextResponse.json({ response: "âŒ Server error" }, { status: 500 });
   }
 }

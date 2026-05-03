@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useRef } from "react";
 import { SendHorizontal, Mic, Zap, Shield, TrendingUp } from "lucide-react";
@@ -11,6 +11,75 @@ const SUGGESTED = [
   { icon: Shield, label: "Check vendor rates against benchmarks" },
   { icon: Zap, label: "Generate a risk report for my project" },
 ];
+
+type RichTextPart =
+  | { kind: "heading"; text: string }
+  | { kind: "paragraph"; text: string }
+  | { kind: "list"; items: string[] };
+
+const cleanBotText = (text: string) =>
+  text
+    .replace(/\*\*(.*?)\*\*/g, "$1")
+    .replace(/\s*(\d+)\.\s+/g, "\n$1. ")
+    .replace(/\s*[-•]\s+/g, "\n- ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+const parseRichText = (text: string): RichTextPart[] => {
+  const lines = cleanBotText(text).split("\n").map((line) => line.trim()).filter(Boolean);
+  const parts: RichTextPart[] = [];
+  let listItems: string[] = [];
+
+  const flushList = () => {
+    if (listItems.length) {
+      parts.push({ kind: "list", items: listItems });
+      listItems = [];
+    }
+  };
+
+  for (const line of lines) {
+    const listMatch = line.match(/^(?:\d+\.|-)\s+(.*)$/);
+    if (listMatch) {
+      listItems.push(listMatch[1].trim());
+      continue;
+    }
+
+    flushList();
+    parts.push(line.length <= 70 && /:$/.test(line) ? { kind: "heading", text: line.replace(/:$/, "") } : { kind: "paragraph", text: line });
+  }
+
+  flushList();
+  return parts.length ? parts : [{ kind: "paragraph", text }];
+};
+
+function BotResponse({ text }: { text: string }) {
+  const parts = parseRichText(text);
+
+  return (
+    <div className="space-y-3">
+      {parts.map((part, index) => {
+        if (part.kind === "heading") {
+          return <h4 key={index} className="text-[13px] font-semibold text-cyan-200 tracking-wide">{part.text}</h4>;
+        }
+
+        if (part.kind === "list") {
+          return (
+            <ol key={index} className="space-y-2.5">
+              {part.items.map((item, itemIndex) => (
+                <li key={itemIndex} className="grid grid-cols-[22px_1fr] gap-2 text-[14px] leading-6 text-slate-200/95">
+                  <span className="mt-0.5 flex h-5 w-5 items-center justify-center rounded-full border border-cyan-400/20 bg-cyan-400/10 text-[10px] font-bold text-cyan-200">{itemIndex + 1}</span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ol>
+          );
+        }
+
+        return <p key={index} className="text-[14px] leading-7 text-slate-200/95">{part.text}</p>;
+      })}
+    </div>
+  );
+}
 
 export default function ChatWindow() {
   const [input, setInput] = useState("");
@@ -56,12 +125,12 @@ export default function ChatWindow() {
       });
 
       const rawText = await res.text();
-      let botReply = "⚠️ No response received.";
+      let botReply = "âš ï¸ No response received.";
       try {
         const data = JSON.parse(rawText);
         botReply = data?.response || botReply;
       } catch {
-        botReply = res.ok ? rawText || botReply : "❌ Chat service returned an invalid response";
+        botReply = res.ok ? rawText || botReply : "âŒ Chat service returned an invalid response";
       }
 
       setMessages((prev) => [...prev, { text: "", type: "bot" }]);
@@ -77,10 +146,10 @@ export default function ChatWindow() {
             setLoading(false);
             scrollToBottom();
           }
-        }, i * 60);
+        }, i * 18);
       });
     } catch {
-      setMessages((prev) => [...prev, { text: "❌ Server error occurred", type: "bot" }]);
+      setMessages((prev) => [...prev, { text: "âŒ Server error occurred", type: "bot" }]);
       setLoading(false);
     }
   };
@@ -90,7 +159,7 @@ export default function ChatWindow() {
   return (
     <div className="relative w-full min-h-screen bg-[#050810] overflow-hidden flex flex-col items-center justify-center">
 
-      {/* ── Deep space background ── */}
+      {/* â”€â”€ Deep space background â”€â”€ */}
       <div className="absolute inset-0 z-0">
         {/* Architectural grid */}
         <div
@@ -127,7 +196,7 @@ export default function ChatWindow() {
         />
       </div>
 
-      {/* ── Header bar ── */}
+      {/* â”€â”€ Header bar â”€â”€ */}
       <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-6 py-4 border-b border-white/5">
         <div className="flex items-center gap-3">
           <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_#22d3ee]" />
@@ -135,11 +204,11 @@ export default function ChatWindow() {
         </div>
         <div className="flex items-center gap-4 text-xs font-mono text-white/20">
           <span>v2.1.0</span>
-          <span className="text-green-400/60">● ONLINE</span>
+          <span className="text-green-400/60">â— ONLINE</span>
         </div>
       </div>
 
-      {/* ── Main chat container ── */}
+      {/* â”€â”€ Main chat container â”€â”€ */}
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
@@ -148,7 +217,7 @@ export default function ChatWindow() {
         style={{ height: "100vh", paddingTop: "72px", paddingBottom: "24px" }}
       >
 
-        {/* ── Empty state ── */}
+        {/* â”€â”€ Empty state â”€â”€ */}
         <AnimatePresence>
           {isEmpty && (
             <motion.div
@@ -195,7 +264,7 @@ export default function ChatWindow() {
                   >
                     <s.icon size={15} className="text-cyan-400/60 group-hover:text-cyan-400 transition-colors shrink-0" />
                     <span className="text-sm text-white/50 group-hover:text-white/80 transition-colors">{s.label}</span>
-                    <span className="ml-auto text-white/20 group-hover:text-cyan-400/60 transition-colors text-xs">↵</span>
+                    <span className="ml-auto text-white/20 group-hover:text-cyan-400/60 transition-colors text-xs">â†µ</span>
                   </motion.button>
                 ))}
               </div>
@@ -203,7 +272,7 @@ export default function ChatWindow() {
           )}
         </AnimatePresence>
 
-        {/* ── Messages ── */}
+        {/* â”€â”€ Messages â”€â”€ */}
         {!isEmpty && (
           <div
             ref={containerRef}
@@ -232,15 +301,19 @@ export default function ChatWindow() {
                     )}
 
                     <div
-                      className={`max-w-[78%] px-4 py-3 text-sm leading-relaxed break-words ${
+                      className={`break-words ${
                         msg.type === "user"
-                          ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-2xl rounded-br-sm shadow-[0_4px_20px_#2563eb40]"
-                          : "bg-white/[0.05] text-white/90 rounded-2xl rounded-bl-sm border border-white/[0.08] shadow-[0_4px_30px_#0ea5e910] backdrop-blur-sm"
+                          ? "max-w-[72%] px-4 py-3 bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-2xl rounded-br-md shadow-[0_4px_20px_#2563eb40]"
+                          : "max-w-[82%] px-5 py-4 bg-[#0d1424]/90 text-white rounded-2xl rounded-bl-md border border-cyan-400/10 shadow-[0_12px_40px_#02061766] backdrop-blur-sm"
                       }`}
                     >
-                      {isLastBot && animatedText ? animatedText : msg.text}
+                      {msg.type === "bot" ? (
+                        <BotResponse text={isLastBot && animatedText ? animatedText : msg.text} />
+                      ) : (
+                        <span className="text-sm font-medium leading-6">{msg.text}</span>
+                      )}
                       {isLastBot && loading && (
-                        <span className="inline-block w-[2px] h-3.5 bg-cyan-400 ml-0.5 animate-pulse align-middle" />
+                        <span className="inline-block w-[2px] h-3.5 bg-cyan-400 ml-1 animate-pulse align-middle" />
                       )}
                     </div>
                   </motion.div>
@@ -275,7 +348,7 @@ export default function ChatWindow() {
           </div>
         )}
 
-        {/* ── Input bar ── */}
+        {/* â”€â”€ Input bar â”€â”€ */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -327,7 +400,7 @@ export default function ChatWindow() {
 
         {/* Footer hint */}
         <p className="text-center text-[10px] text-white/15 mt-3 font-mono tracking-wider">
-          POWERED BY AUTO NIRMAN AI · BUILT FOR INDIA
+          POWERED BY AUTO NIRMAN AI Â· BUILT FOR INDIA
         </p>
       </motion.div>
     </div>
