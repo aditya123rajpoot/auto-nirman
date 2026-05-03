@@ -4,9 +4,10 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FaRobot, FaMap, FaGavel, FaBuilding,
-  FaHome, FaProjectDiagram, FaUser,
+  FaHome, FaProjectDiagram, FaUser, FaBolt,
 } from 'react-icons/fa';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import OnboardingWizard from '@/components/OnboardingWizard';
 
 const features = [
   { icon: FaRobot,          title: 'AI Chatbot',                  route: '/chatbot',                             ready: true  },
@@ -21,6 +22,14 @@ const features = [
 export default function Dashboard() {
   const router = useRouter();
   const [comingSoon, setComingSoon] = useState<string | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useEffect(() => {
+    const onboarded = localStorage.getItem('autonirman_onboarded');
+    if (!onboarded) {
+      setShowOnboarding(true);
+    }
+  }, []);
 
   const handleNavigation = (feature: typeof features[0]) => {
     if (!feature.ready) {
@@ -36,10 +45,18 @@ export default function Dashboard() {
       <div className="absolute inset-0 z-0 bg-[radial-gradient(circle_at_1px_1px,_#38bdf811_1px,_transparent_0)] [background-size:20px_20px] opacity-10 animate-pulse" />
       <div className="absolute inset-0 z-0 bg-gradient-to-br from-blue-900/20 via-purple-900/20 to-black" />
 
-      {/* Heading */}
-      <h2 className="relative z-10 text-3xl font-bold mb-10 text-center drop-shadow-[0_0_15px_#38bdf8] animate-fade-in">
-        Dashboard Features
-      </h2>
+      {/* Heading + Replay button */}
+      <div className="relative z-10 flex items-center justify-center gap-4 mb-10">
+        <h2 className="text-3xl font-bold text-center drop-shadow-[0_0_15px_#38bdf8] animate-fade-in">
+          Dashboard Features
+        </h2>
+        <button
+          onClick={() => setShowOnboarding(true)}
+          className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-cyan-400 border border-white/10 hover:border-cyan-400/30 rounded-full px-3 py-1.5 transition-all"
+        >
+          <FaBolt size={10} /> Tour
+        </button>
+      </div>
 
       {/* Feature Cards */}
       <div className="relative z-10 grid grid-cols-2 sm:grid-cols-3 gap-8">
@@ -92,6 +109,13 @@ export default function Dashboard() {
               </button>
             </motion.div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Onboarding Wizard */}
+      <AnimatePresence>
+        {showOnboarding && (
+          <OnboardingWizard onComplete={() => setShowOnboarding(false)} />
         )}
       </AnimatePresence>
     </div>
