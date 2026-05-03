@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -28,6 +28,8 @@ export default function Navbar() {
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
+
+  if (pathname === '/chatbot') return null;
 
   const toggleMenu = () => setIsOpen((prev) => !prev);
 

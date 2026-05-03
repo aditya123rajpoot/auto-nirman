@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -108,7 +108,7 @@ const RISK_CONFIG = {
   LOW:      { color: '#22c55e', label: 'LOW RISK',      bg: 'from-green-900/30 to-green-900/10', border: 'border-green-500/30' },
 };
 
-export default function BOQResultsPage() {
+function BOQResultsPageContent() {
   const params = useSearchParams();
   const router = useRouter();
   const [result, setResult] = useState<any>(null);
@@ -369,5 +369,16 @@ export default function BOQResultsPage() {
         </AnimatePresence>
       </div>
     </div>
+  );
+}
+export default function BOQResultsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#020817] flex items-center justify-center text-cyan-400">
+        Loading BOQ report...
+      </div>
+    }>
+      <BOQResultsPageContent />
+    </Suspense>
   );
 }
