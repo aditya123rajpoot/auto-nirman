@@ -1,24 +1,32 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { SendHorizontal } from "lucide-react";
+import { SendHorizontal, Mic, Zap, Shield, TrendingUp } from "lucide-react";
 import VoiceInput from "./VoiceInput";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Lottie from "lottie-react";
+
+const SUGGESTED = [
+  { icon: TrendingUp, label: "Analyse my BOQ for cost leakage" },
+  { icon: Shield, label: "Check vendor rates against benchmarks" },
+  { icon: Zap, label: "Generate a risk report for my project" },
+];
 
 export default function ChatWindow() {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<{ text: string; type: "user" | "bot" }[]>([]);
   const [loading, setLoading] = useState(false);
   const [botAnimation, setBotAnimation] = useState(null);
-  const [animatedText, setAnimatedText] = useState(""); // for bot animation
+  const [animatedText, setAnimatedText] = useState("");
+  const [focused, setFocused] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetch("/lotties/bot.json")
       .then((res) => res.json())
       .then((data) => setBotAnimation(data))
-      .catch((err) => console.error("Failed to load bot animation:", err));
+      .catch(() => {});
   }, []);
 
   const scrollToBottom = () => {
@@ -30,24 +38,25 @@ export default function ChatWindow() {
     }, 100);
   };
 
-  const sendMessage = async () => {
-    if (!input.trim()) return;
+  const sendMessage = async (overrideText?: string) => {
+    const text = (overrideText ?? input).trim();
+    if (!text) return;
 
-    const userMessage = { text: input.trim(), type: "user" } as const;
+    const userMessage = { text, type: "user" } as const;
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setLoading(true);
+    scrollToBottom();
 
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage.text }),
+        body: JSON.stringify({ message: text }),
       });
 
       const rawText = await res.text();
       let botReply = "⚠️ No response received.";
-
       try {
         const data = JSON.parse(rawText);
         botReply = data?.response || botReply;
@@ -55,109 +64,272 @@ export default function ChatWindow() {
         botReply = res.ok ? rawText || botReply : "❌ Chat service returned an invalid response";
       }
 
-      // Insert empty bot message to animate into
       setMessages((prev) => [...prev, { text: "", type: "bot" }]);
       setAnimatedText("");
 
       const words = botReply.split(" ");
       let current = "";
-
       words.forEach((word: string, i: number) => {
         setTimeout(() => {
           current += (i === 0 ? "" : " ") + word;
           setAnimatedText(current);
-
           if (i === words.length - 1) {
             setLoading(false);
             scrollToBottom();
           }
-        }, i * 100); // adjust speed here
+        }, i * 60);
       });
-    } catch (err) {
+    } catch {
       setMessages((prev) => [...prev, { text: "❌ Server error occurred", type: "bot" }]);
       setLoading(false);
     }
   };
 
+  const isEmpty = messages.length === 0;
+
   return (
-    <div className="relative w-full min-h-screen bg-black overflow-hidden px-2">
-      {/* Cyberpunk animated grid background */}
-      <div className="absolute inset-0 z-0 bg-[radial-gradient(circle_at_1px_1px,_#ffffff11_1px,_transparent_0)] [background-size:16px_16px] opacity-10" />
-      <div className="absolute inset-0 z-0 bg-gradient-to-br from-blue-900/20 via-purple-900/10 to-black" />
+    <div className="relative w-full min-h-screen bg-[#050810] overflow-hidden flex flex-col items-center justify-center">
 
-      {/* Chat Window */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.3 }}
-        className="relative z-10 font-sans w-full max-w-md mx-auto mt-24 bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/20 flex flex-col h-[80vh] animate-neon-flicker shadow-neon"
-      >
-        {/* Bot Animation */}
-        <div className="flex justify-center mb-2">
-          {botAnimation && (
-            <div className="w-20 h-20">
-              <Lottie animationData={botAnimation} loop autoplay />
-            </div>
-          )}
-        </div>
-
-        {/* Messages */}
+      {/* ── Deep space background ── */}
+      <div className="absolute inset-0 z-0">
+        {/* Architectural grid */}
         <div
-          ref={containerRef}
-          className="flex-1 overflow-y-auto space-y-2 px-1 py-2 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent"
-        >
-          {messages.map((msg, idx) => {
-            const isLastBotMessage = msg.type === "bot" && idx === messages.length - 1;
+          className="absolute inset-0 opacity-[0.04]"
+          style={{
+            backgroundImage: `
+              linear-gradient(#38bdf8 1px, transparent 1px),
+              linear-gradient(90deg, #38bdf8 1px, transparent 1px)
+            `,
+            backgroundSize: "40px 40px",
+          }}
+        />
+        {/* Perspective grid floor */}
+        <div
+          className="absolute bottom-0 left-0 right-0 h-64 opacity-[0.06]"
+          style={{
+            backgroundImage: `linear-gradient(#38bdf8 1px, transparent 1px), linear-gradient(90deg, #38bdf8 1px, transparent 1px)`,
+            backgroundSize: "60px 60px",
+            transform: "perspective(400px) rotateX(60deg)",
+            transformOrigin: "bottom center",
+          }}
+        />
+        {/* Ambient glow orbs */}
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600/8 rounded-full blur-[100px]" />
+        <div className="absolute bottom-1/3 right-1/4 w-72 h-72 bg-cyan-500/6 rounded-full blur-[80px]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-900/10 rounded-full blur-[120px]" />
+        {/* Scan line overlay */}
+        <div
+          className="absolute inset-0 opacity-[0.015] pointer-events-none"
+          style={{
+            backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 2px, #fff 2px, #fff 3px)",
+            backgroundSize: "100% 3px",
+          }}
+        />
+      </div>
 
-            return (
-              <div
-                key={idx}
-                className={`max-w-[80%] px-4 py-2 rounded-xl text-sm break-words ${
-                  msg.type === "user"
-                    ? "bg-blue-600 text-white self-end ml-auto"
-                    : "bg-white/10 text-white backdrop-blur-sm border border-white/20 self-start shadow-[0_0_10px_#38bdf8,0_0_20px_#38bdf8] animate-fade-in"
-                }`}
-              >
-                {isLastBotMessage && animatedText ? animatedText : msg.text}
+      {/* ── Header bar ── */}
+      <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-6 py-4 border-b border-white/5">
+        <div className="flex items-center gap-3">
+          <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_#22d3ee]" />
+          <span className="text-xs font-mono tracking-[0.2em] text-cyan-400/70 uppercase">Auto Nirman AI</span>
+        </div>
+        <div className="flex items-center gap-4 text-xs font-mono text-white/20">
+          <span>v2.1.0</span>
+          <span className="text-green-400/60">● ONLINE</span>
+        </div>
+      </div>
 
-                {/* Blinking cursor if user message is last and bot is typing */}
-                {msg.type === "user" && idx === messages.length - 1 && loading && (
-                  <span className="inline-block w-2 h-4 bg-accent ml-1 animate-blink" />
-                )}
+      {/* ── Main chat container ── */}
+      <motion.div
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        className="relative z-10 w-full max-w-2xl mx-auto px-4 flex flex-col"
+        style={{ height: "100vh", paddingTop: "72px", paddingBottom: "24px" }}
+      >
+
+        {/* ── Empty state ── */}
+        <AnimatePresence>
+          {isEmpty && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.94, y: -20 }}
+              transition={{ duration: 0.5 }}
+              className="flex-1 flex flex-col items-center justify-center text-center"
+            >
+              {/* Bot avatar */}
+              <div className="relative mb-8">
+                <div className="absolute inset-0 rounded-full bg-cyan-400/10 blur-2xl scale-150 animate-pulse" />
+                <div className="relative w-28 h-28 rounded-full border border-cyan-400/20 bg-gradient-to-br from-blue-900/40 to-cyan-900/20 flex items-center justify-center backdrop-blur-xl shadow-[0_0_40px_#0ea5e920,inset_0_1px_0_#ffffff15]">
+                  {botAnimation ? (
+                    <Lottie animationData={botAnimation} loop autoplay className="w-20 h-20" />
+                  ) : (
+                    <Zap className="text-cyan-400" size={40} />
+                  )}
+                </div>
+                {/* Rotating ring */}
+                <div
+                  className="absolute inset-[-8px] rounded-full border border-dashed border-cyan-400/20 animate-spin"
+                  style={{ animationDuration: "12s" }}
+                />
               </div>
-            );
-          })}
 
-          {/* Typing indicator */}
-          {loading && (
-            <div className="bg-white/10 text-accent px-4 py-2 rounded-xl text-sm w-fit backdrop-blur-sm border border-white/20 flex items-center gap-1">
-              typing
-              <span className="w-1 h-1 rounded-full bg-accent animate-dot-pulse" />
-              <span className="w-1 h-1 rounded-full bg-accent animate-dot-pulse delay-200" />
-              <span className="w-1 h-1 rounded-full bg-accent animate-dot-pulse delay-400" />
+              <h1 className="text-2xl font-bold text-white mb-2 tracking-tight">
+                Construction AI Buddy
+              </h1>
+              <p className="text-sm text-white/40 mb-10 max-w-xs leading-relaxed font-light">
+                Ask me anything about BOQ analysis, cost benchmarks, vendor rates, or project planning.
+              </p>
+
+              {/* Suggested prompts */}
+              <div className="w-full space-y-2">
+                {SUGGESTED.map((s, i) => (
+                  <motion.button
+                    key={i}
+                    initial={{ opacity: 0, x: -12 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.2 + i * 0.1 }}
+                    onClick={() => sendMessage(s.label)}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-white/[0.03] border border-white/[0.07] hover:border-cyan-400/30 hover:bg-cyan-400/[0.04] transition-all duration-200 group text-left"
+                  >
+                    <s.icon size={15} className="text-cyan-400/60 group-hover:text-cyan-400 transition-colors shrink-0" />
+                    <span className="text-sm text-white/50 group-hover:text-white/80 transition-colors">{s.label}</span>
+                    <span className="ml-auto text-white/20 group-hover:text-cyan-400/60 transition-colors text-xs">↵</span>
+                  </motion.button>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ── Messages ── */}
+        {!isEmpty && (
+          <div
+            ref={containerRef}
+            className="flex-1 overflow-y-auto space-y-4 pb-4 pr-1 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent"
+          >
+            <AnimatePresence initial={false}>
+              {messages.map((msg, idx) => {
+                const isLastBot = msg.type === "bot" && idx === messages.length - 1;
+                return (
+                  <motion.div
+                    key={idx}
+                    initial={{ opacity: 0, y: 12, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                    className={`flex ${msg.type === "user" ? "justify-end" : "justify-start"} items-end gap-2`}
+                  >
+                    {/* Bot avatar bubble */}
+                    {msg.type === "bot" && (
+                      <div className="w-7 h-7 rounded-full border border-cyan-400/20 bg-cyan-900/20 flex items-center justify-center shrink-0 mb-1">
+                        {botAnimation ? (
+                          <Lottie animationData={botAnimation} loop autoplay className="w-5 h-5" />
+                        ) : (
+                          <Zap size={12} className="text-cyan-400" />
+                        )}
+                      </div>
+                    )}
+
+                    <div
+                      className={`max-w-[78%] px-4 py-3 text-sm leading-relaxed break-words ${
+                        msg.type === "user"
+                          ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-2xl rounded-br-sm shadow-[0_4px_20px_#2563eb40]"
+                          : "bg-white/[0.05] text-white/90 rounded-2xl rounded-bl-sm border border-white/[0.08] shadow-[0_4px_30px_#0ea5e910] backdrop-blur-sm"
+                      }`}
+                    >
+                      {isLastBot && animatedText ? animatedText : msg.text}
+                      {isLastBot && loading && (
+                        <span className="inline-block w-[2px] h-3.5 bg-cyan-400 ml-0.5 animate-pulse align-middle" />
+                      )}
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+
+            {/* Typing indicator */}
+            <AnimatePresence>
+              {loading && messages[messages.length - 1]?.type !== "bot" && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="flex items-end gap-2"
+                >
+                  <div className="w-7 h-7 rounded-full border border-cyan-400/20 bg-cyan-900/20 flex items-center justify-center shrink-0">
+                    <Zap size={12} className="text-cyan-400" />
+                  </div>
+                  <div className="px-4 py-3 rounded-2xl rounded-bl-sm bg-white/[0.05] border border-white/[0.08] flex items-center gap-1.5">
+                    {[0, 1, 2].map((i) => (
+                      <span
+                        key={i}
+                        className="w-1.5 h-1.5 rounded-full bg-cyan-400/60 animate-bounce"
+                        style={{ animationDelay: `${i * 150}ms` }}
+                      />
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
+
+        {/* ── Input bar ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.5 }}
+          className={`relative mt-4 rounded-2xl transition-all duration-300 ${
+            focused
+              ? "shadow-[0_0_0_1px_#22d3ee30,0_8px_40px_#0ea5e915]"
+              : "shadow-[0_0_0_1px_#ffffff10,0_4px_20px_#00000040]"
+          }`}
+        >
+          <div className="flex items-center gap-2 bg-white/[0.04] backdrop-blur-xl rounded-2xl border border-white/[0.08] px-4 py-3">
+            <input
+              ref={inputRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+              onFocus={() => setFocused(true)}
+              onBlur={() => setFocused(false)}
+              placeholder="Ask me about your project..."
+              className="flex-1 bg-transparent text-white placeholder-white/25 outline-none text-sm caret-cyan-400"
+            />
+
+            <div className="flex items-center gap-1.5">
+              <VoiceInput onFinalResult={(text) => setInput(text)} />
+
+              <button
+                onClick={() => sendMessage()}
+                disabled={!input.trim()}
+                className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 text-white flex items-center justify-center transition-all duration-200 hover:scale-105 hover:shadow-[0_0_20px_#38bdf860] disabled:opacity-30 disabled:hover:scale-100 disabled:hover:shadow-none active:scale-95"
+              >
+                <SendHorizontal size={16} />
+              </button>
+            </div>
+          </div>
+
+          {/* Animated focus border */}
+          {focused && (
+            <div className="absolute inset-0 rounded-2xl pointer-events-none overflow-hidden">
+              <div className="absolute inset-0 rounded-2xl border border-cyan-400/20" />
+              <motion.div
+                className="absolute top-0 left-0 h-[1px] bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent"
+                initial={{ width: "0%", left: "50%" }}
+                animate={{ width: "100%", left: "0%" }}
+                transition={{ duration: 0.4 }}
+              />
             </div>
           )}
-        </div>
+        </motion.div>
 
-        {/* Input field and buttons */}
-        <div className="flex items-center gap-2 mt-4">
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-            placeholder="Ask something..."
-            className="flex-1 p-2 rounded-lg bg-white/20 text-white placeholder-white/50 outline-none focus:ring focus:ring-accent transition duration-300 hover:shadow-[0_0_10px_#38bdf8]"
-          />
-          <VoiceInput onFinalResult={(text) => setInput(text)} />
-          <button
-            onClick={sendMessage}
-            className="p-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 hover:shadow-[0_0_15px_#38bdf8] transition duration-300"
-          >
-            <SendHorizontal size={20} />
-          </button>
-        </div>
+        {/* Footer hint */}
+        <p className="text-center text-[10px] text-white/15 mt-3 font-mono tracking-wider">
+          POWERED BY AUTO NIRMAN AI · BUILT FOR INDIA
+        </p>
       </motion.div>
     </div>
   );
 }
-
