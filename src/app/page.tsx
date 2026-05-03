@@ -35,43 +35,40 @@ const features = [
 ];
 
 const stats = [
-  { value: '₹1Cr+', label: 'Average savings per project' },
+  { value: '15–20%', label: 'Average savings per project' },
   { value: '95%', label: 'BOQ accuracy rate' },
   { value: '10x', label: 'Faster than manual audits' },
   { value: '500+', label: 'Projects analysed' },
 ];
 
-const testimonials = [
+const socialProofStats = [
   {
-    name: 'Rajesh Kumar',
-    company: 'Kumar Real Estate, Lucknow',
-    text: 'Auto Nirman saved us ₹2.3 crores on our last project. The BOQ analysis caught vendor inflation we would have missed.',
-    stars: 5,
+    value: '15–20%',
+    label: 'Cost saved per project',
+    desc: 'BOQ errors and vendor inflation caught before construction begins — saving crores on large projects.',
   },
   {
-    name: 'Priya Sharma',
-    company: 'Sharma Constructions, Kanpur',
-    text: 'Best investment for any mid-size developer. Caught duplicate line items worth ₹40 lakh in 15 minutes.',
-    stars: 5,
+    value: '95%',
+    label: 'BOQ accuracy rate',
+    desc: 'Our AI flags duplicate line items, inflated rates, and missing quantities that manual review misses.',
   },
   {
-    name: 'Vikram Singh',
-    company: 'Singh Builders, Agra',
-    text: 'The PDF reports are so detailed, our CFO uses them directly in board meetings. Impressed.',
-    stars: 5,
+    value: '10x',
+    label: 'Faster than manual audit',
+    desc: 'What takes a team days, Auto Nirman does in minutes — with detailed PDF reports ready for board meetings.',
   },
 ];
 
 const pricingPlans = [
   {
     name: 'Starter',
-    price: '₹2.5L',
-    desc: 'Perfect for your first project',
+    price: '₹700',
+    desc: 'Perfect for individual developers & small firms',
     features: ['1 BOQ Analysis', 'PDF Report', 'Email Support', '30 days validity'],
   },
   {
     name: 'Professional',
-    price: '₹8L',
+    price: '₹2,000',
     desc: 'Most popular for mid-size developers',
     features: ['5 BOQ Analyses', 'Priority Support', 'Custom Benchmarks', 'API Access', '90 days validity'],
     popular: true,
@@ -294,7 +291,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── TESTIMONIALS ── */}
+      {/* ── SOCIAL PROOF (replaced fake testimonials) ── */}
       <section className="relative z-10 py-20 px-4">
         <motion.h2
           initial={{ opacity: 0, y: 20 }}
@@ -305,26 +302,18 @@ export default function Home() {
           Trusted by developers across India
         </motion.h2>
         <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
-          {testimonials.map((testimonial, i) => (
+          {socialProofStats.map((item, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.1 }}
-              className="bg-white/5 backdrop-blur border border-white/10 rounded-2xl p-6"
+              className="bg-white/5 backdrop-blur border border-white/10 rounded-2xl p-6 flex flex-col"
             >
-              <div className="flex gap-1 mb-3">
-                {[...Array(testimonial.stars)].map((_, j) => (
-                  <FaStar key={j} className="text-yellow-400" size={14} />
-                ))}
-              </div>
-              <FaQuoteLeft className="text-blue-400/30 text-xl mb-3" />
-              <p className="text-sm text-slate-300 mb-4 leading-relaxed">"{testimonial.text}"</p>
-              <div>
-                <p className="font-semibold text-sm">{testimonial.name}</p>
-                <p className="text-xs text-slate-500">{testimonial.company}</p>
-              </div>
+              <p className="text-4xl font-extrabold text-blue-400 mb-2">{item.value}</p>
+              <p className="text-sm font-semibold text-white mb-3">{item.label}</p>
+              <p className="text-sm text-slate-400 leading-relaxed">{item.desc}</p>
             </motion.div>
           ))}
         </div>
@@ -397,9 +386,9 @@ export default function Home() {
           viewport={{ once: true }}
           className="text-3xl md:text-5xl font-extrabold mb-6"
         >
-          Ready to save your first{' '}
+          Ready to save{' '}
           <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
-            ₹1 Crore?
+            15–20% on every project?
           </span>
         </motion.h2>
         <motion.p
