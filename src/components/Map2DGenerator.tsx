@@ -1,15 +1,47 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type ChangeEvent, type MouseEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, Building2, Car, Compass, Home, Layers3, MapPinned, Ruler, Sparkles } from 'lucide-react';
+import { ArrowRight, Building2, Car, Compass, Home, ImagePlus, Layers3, MapPinned, MousePointer2, Ruler, Sparkles, Undo2, Wand2 } from 'lucide-react';
 import { generateMap2DLayout } from '@/lib/map2d/generateLayout';
-import type { Map2DHouseType, Map2DInput, RoadSide } from '@/types/map2d';
+import type { Map2DHouseType, Map2DInput, Map2DPlanStyle, Map2DPlotMode, Map2DPoint, RoadSide } from '@/types/map2d';
 
 export const MAP2D_STORAGE_KEY = 'auto_nirman_2d_map_layout';
 
 function classNames(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(' ');
+}
+
+const glowStyles = {
+  cyan: {
+    active: 'border-cyan-300/70 bg-cyan-300/12 text-cyan-50 shadow-[0_0_28px_rgba(34,211,238,0.22)]',
+    idle: 'border-white/10 bg-white/[0.035] text-slate-400 hover:border-cyan-300/55 hover:bg-cyan-300/10 hover:text-cyan-50 hover:shadow-[0_0_26px_rgba(34,211,238,0.22)]',
+  },
+  amber: {
+    active: 'border-amber-300/70 bg-amber-300/12 text-amber-50 shadow-[0_0_28px_rgba(251,191,36,0.20)]',
+    idle: 'border-white/10 bg-white/[0.035] text-slate-400 hover:border-amber-300/55 hover:bg-amber-300/10 hover:text-amber-50 hover:shadow-[0_0_26px_rgba(251,191,36,0.18)]',
+  },
+  emerald: {
+    active: 'border-emerald-300/70 bg-emerald-300/12 text-emerald-50 shadow-[0_0_28px_rgba(52,211,153,0.20)]',
+    idle: 'border-white/10 bg-white/[0.035] text-slate-400 hover:border-emerald-300/55 hover:bg-emerald-300/10 hover:text-emerald-50 hover:shadow-[0_0_26px_rgba(52,211,153,0.18)]',
+  },
+  violet: {
+    active: 'border-violet-300/70 bg-violet-300/12 text-violet-50 shadow-[0_0_28px_rgba(167,139,250,0.22)]',
+    idle: 'border-white/10 bg-white/[0.035] text-slate-400 hover:border-violet-300/55 hover:bg-violet-300/10 hover:text-violet-50 hover:shadow-[0_0_26px_rgba(167,139,250,0.20)]',
+  },
+  rose: {
+    active: 'border-rose-300/70 bg-rose-300/12 text-rose-50 shadow-[0_0_28px_rgba(251,113,133,0.20)]',
+    idle: 'border-white/10 bg-white/[0.035] text-slate-400 hover:border-rose-300/55 hover:bg-rose-300/10 hover:text-rose-50 hover:shadow-[0_0_26px_rgba(251,113,133,0.18)]',
+  },
+} as const;
+
+type GlowTone = keyof typeof glowStyles;
+
+function glowClass(tone: GlowTone, active = false) {
+  return classNames(
+    'transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0',
+    active ? glowStyles[tone].active : glowStyles[tone].idle
+  );
 }
 
 function NumberField({ label, value, onChange, helper }: {
@@ -37,10 +69,23 @@ function NumberField({ label, value, onChange, helper }: {
 
 export default function Map2DGenerator() {
   const router = useRouter();
+  const [plotMode, setPlotMode] = useState<Map2DPlotMode>('rectangle');
   const [plotLength, setPlotLength] = useState(60);
   const [plotWidth, setPlotWidth] = useState(40);
+  const [plotPolygon, setPlotPolygon] = useState<Map2DPoint[]>([
+    { x: 3, y: 4 },
+    { x: 38, y: 0 },
+    { x: 40, y: 52 },
+    { x: 30, y: 60 },
+    { x: 0, y: 56 },
+  ]);
+  const [boundaryImage, setBoundaryImage] = useState<string | null>(null);
+  const [detectingBoundary, setDetectingBoundary] = useState(false);
   const [roadSide, setRoadSide] = useState<RoadSide>('north');
   const [houseType, setHouseType] = useState<Map2DHouseType>('3bhk');
+  const [bathrooms, setBathrooms] = useState(2);
+  const [planStyle, setPlanStyle] = useState<Map2DPlanStyle>('family');
+  const [aiBrief, setAiBrief] = useState('airy family home with private bedrooms, premium living room, clean circulation');
   const [vastu, setVastu] = useState(true);
   const [parking, setParking] = useState(true);
   const [staircase, setStaircase] = useState(true);
@@ -48,14 +93,118 @@ export default function Map2DGenerator() {
   const [error, setError] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
 
-  const generate = () => {
+  const addTracePoint = (event: MouseEvent<SVGSVGElement>) => {
+    if (plotMode !== 'trace') return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = ((event.clientX - rect.left) / rect.width) * plotWidth;
+    const y = ((event.clientY - rect.top) / rect.height) * plotLength;
+    setPlotPolygon(points => [...points, { x: Number(x.toFixed(1)), y: Number(y.toFixed(1)) }]);
+  };
+
+  const undoTracePoint = () => {
+    setPlotPolygon(points => points.slice(0, -1));
+  };
+
+  const resetTrace = () => {
+    setPlotPolygon([
+      { x: plotWidth * 0.08, y: plotLength * 0.06 },
+      { x: plotWidth * 0.95, y: 0 },
+      { x: plotWidth, y: plotLength * 0.86 },
+      { x: plotWidth * 0.72, y: plotLength },
+      { x: 0, y: plotLength * 0.92 },
+    ]);
+  };
+
+  const uploadBoundary = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setBoundaryImage(typeof reader.result === 'string' ? reader.result : null);
+      setPlotMode('trace');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const autoDetectBoundary = () => {
+    if (!boundaryImage) {
+      setError('Upload a plot boundary image first.');
+      return;
+    }
+
+    setDetectingBoundary(true);
+    setError(null);
+
+    const image = new Image();
+    image.onload = () => {
+      const canvas = document.createElement('canvas');
+      const size = 360;
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        setDetectingBoundary(false);
+        setError('Could not read uploaded image.');
+        return;
+      }
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, size, size);
+      const ratio = Math.min(size / image.width, size / image.height);
+      const drawWidth = image.width * ratio;
+      const drawHeight = image.height * ratio;
+      const drawX = (size - drawWidth) / 2;
+      const drawY = (size - drawHeight) / 2;
+      ctx.drawImage(image, drawX, drawY, drawWidth, drawHeight);
+
+      const data = ctx.getImageData(0, 0, size, size).data;
+
+      fetch('/api/map2d/detect-boundary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageData: Array.from(data),
+          imageWidth: size,
+          imageHeight: size,
+          plotWidth,
+          plotLength,
+        }),
+      })
+        .then(async response => {
+          const payload = await response.json();
+          if (!response.ok || !payload.success) {
+            throw new Error(payload.error || 'OpenCV could not detect the boundary.');
+          }
+          setPlotPolygon(payload.points as Map2DPoint[]);
+        })
+        .catch(err => {
+          setError(err instanceof Error ? err.message : 'OpenCV boundary detection failed.');
+        })
+        .finally(() => setDetectingBoundary(false));
+    };
+
+    image.onerror = () => {
+      setDetectingBoundary(false);
+      setError('Could not load uploaded image.');
+    };
+    image.src = boundaryImage;
+  };
+
+  const generate = async () => {
     setError(null);
     setGenerating(true);
     const input: Map2DInput = {
+      plotMode,
       plotLength,
       plotWidth,
+      plotPolygon: plotMode === 'trace' ? plotPolygon : undefined,
       roadSide,
       houseType,
+      bedrooms: houseType === '3bhk' ? 3 : 2,
+      bathrooms,
+      planStyle,
+      aiBrief,
       vastu,
       parking,
       staircase,
@@ -63,7 +212,22 @@ export default function Map2DGenerator() {
     };
 
     try {
-      const layout = generateMap2DLayout(input);
+      let enhancedInput = input;
+      try {
+        const response = await fetch('/api/map2d/ai-plan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(input),
+        });
+        const payload = await response.json();
+        if (response.ok && payload.success && payload.aiPlan) {
+          enhancedInput = { ...input, aiPlan: payload.aiPlan };
+        }
+      } catch {
+        enhancedInput = input;
+      }
+
+      const layout = generateMap2DLayout(enhancedInput);
       sessionStorage.setItem(MAP2D_STORAGE_KEY, JSON.stringify(layout));
       window.setTimeout(() => {
         router.push('/dashboard/2d-map-generator/result');
@@ -73,6 +237,16 @@ export default function Map2DGenerator() {
       setError(err instanceof Error ? err.message : 'Could not generate layout.');
     }
   };
+
+  const svgPoints = plotPolygon
+    .map(point => `${(point.x / Math.max(plotWidth, 1)) * 100},${(point.y / Math.max(plotLength, 1)) * 100}`)
+    .join(' ');
+  const tracedArea = Math.abs(
+    plotPolygon.reduce((total, point, index) => {
+      const next = plotPolygon[(index + 1) % plotPolygon.length];
+      return total + point.x * next.y - next.x * point.y;
+    }, 0) / 2
+  );
 
   return (
     <div className="relative mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
@@ -85,7 +259,7 @@ export default function Map2DGenerator() {
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-100">Generating map</p>
             <h2 className="mt-3 text-2xl font-bold text-white">Building clean geometry</h2>
             <div className="mt-5 space-y-2 text-left">
-              {['Validating plot dimensions', 'Placing rooms with deterministic coordinates', 'Preparing futuristic JPEG renderer'].map(item => (
+              {['Analyzing boundary with AI', 'Choosing a unique planning strategy', 'Preparing futuristic JPEG renderer'].map(item => (
                 <div key={item} className="rounded-lg border border-white/10 bg-white/[0.035] px-4 py-3 text-sm text-slate-300">
                   {item}
                 </div>
@@ -108,8 +282,111 @@ export default function Map2DGenerator() {
 
       <div className="rounded-lg border border-white/10 bg-slate-950/70 shadow-2xl shadow-black/40 backdrop-blur">
         <div className="grid gap-6 p-5 sm:p-6 lg:grid-cols-2">
+          <section className="lg:col-span-2">
+            <p className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-200">
+              <MapPinned size={17} className="text-cyan-200" /> Plot input mode
+            </p>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {[
+                { value: 'rectangle' as const, title: 'Rectangle plot', desc: 'Fastest mode for regular plots.' },
+                { value: 'trace' as const, title: 'Trace irregular plot', desc: 'Click boundary points for real-world plot shapes.' },
+              ].map(option => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setPlotMode(option.value)}
+                  className={classNames(
+                    'rounded-lg border p-4 text-left transition-all',
+                    glowClass('cyan', plotMode === option.value)
+                  )}
+                >
+                  <span className="block text-sm font-bold">{option.title}</span>
+                  <span className="mt-1 block text-xs leading-5">{option.desc}</span>
+                </button>
+              ))}
+            </div>
+          </section>
+
           <NumberField label="Plot length" value={plotLength} onChange={setPlotLength} helper="Depth of plot in feet." />
           <NumberField label="Plot width" value={plotWidth} onChange={setPlotWidth} helper="Frontage width in feet." />
+
+          {plotMode === 'trace' && (
+            <section className="lg:col-span-2 rounded-lg border border-cyan-300/15 bg-cyan-300/[0.035] p-4">
+              <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="flex items-center gap-2 text-sm font-semibold text-cyan-50">
+                    <ImagePlus size={17} className="text-cyan-200" /> Upload irregular boundary
+                  </p>
+                  <p className="mt-1 text-xs leading-5 text-slate-400">
+                    Upload a clear plot image. Auto Nirman detects the outer boundary, then you can refine it with clicks if needed.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-cyan-300/20 bg-cyan-300/10 px-3 py-2 text-xs font-semibold text-cyan-50 transition-all duration-300 hover:-translate-y-0.5 hover:border-cyan-200/70 hover:bg-cyan-300/15 hover:shadow-[0_0_24px_rgba(34,211,238,0.22)]">
+                    <ImagePlus size={14} /> Upload
+                    <input type="file" accept="image/*" onChange={uploadBoundary} className="hidden" />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={autoDetectBoundary}
+                    disabled={detectingBoundary}
+                    className="inline-flex items-center gap-2 rounded-lg border border-emerald-300/20 bg-emerald-300/10 px-3 py-2 text-xs font-semibold text-emerald-50 transition-all duration-300 hover:-translate-y-0.5 hover:border-emerald-200/70 hover:bg-emerald-300/15 hover:shadow-[0_0_24px_rgba(52,211,153,0.22)] disabled:opacity-60"
+                  >
+                    <Wand2 size={14} /> {detectingBoundary ? 'Detecting' : 'Auto detect'}
+                  </button>
+                  <button type="button" onClick={undoTracePoint} className="inline-flex items-center gap-2 rounded-lg border border-violet-300/15 bg-violet-300/5 px-3 py-2 text-xs font-semibold text-violet-100 transition-all duration-300 hover:-translate-y-0.5 hover:border-violet-300/60 hover:bg-violet-300/12 hover:shadow-[0_0_22px_rgba(167,139,250,0.20)]">
+                    <Undo2 size={14} /> Undo
+                  </button>
+                  <button type="button" onClick={resetTrace} className="rounded-lg border border-rose-300/15 bg-rose-300/5 px-3 py-2 text-xs font-semibold text-rose-100 transition-all duration-300 hover:-translate-y-0.5 hover:border-rose-300/60 hover:bg-rose-300/12 hover:shadow-[0_0_22px_rgba(251,113,133,0.18)]">
+                    Reset
+                  </button>
+                </div>
+              </div>
+
+              <svg
+                viewBox="0 0 100 100"
+                preserveAspectRatio="none"
+                onClick={addTracePoint}
+                className="h-72 w-full cursor-crosshair rounded-lg border border-cyan-300/20 bg-slate-950/80"
+              >
+                <defs>
+                  <pattern id="trace-grid" width="10" height="10" patternUnits="userSpaceOnUse">
+                    <path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(125,211,252,0.14)" strokeWidth="0.35" />
+                  </pattern>
+                </defs>
+                {boundaryImage && (
+                  <image href={boundaryImage} x="0" y="0" width="100" height="100" preserveAspectRatio="xMidYMid meet" opacity="0.38" />
+                )}
+                <rect width="100" height="100" fill="url(#trace-grid)" />
+                {plotPolygon.length > 2 && (
+                  <polygon points={svgPoints} fill="rgba(34,211,238,0.12)" stroke="#67e8f9" strokeWidth="1.1" vectorEffect="non-scaling-stroke" />
+                )}
+                {plotPolygon.map((point, index) => (
+                  <g key={`${point.x}-${point.y}-${index}`}>
+                    <circle cx={(point.x / plotWidth) * 100} cy={(point.y / plotLength) * 100} r="1.6" fill="#fbbf24" vectorEffect="non-scaling-stroke" />
+                    <text x={(point.x / plotWidth) * 100 + 2} y={(point.y / plotLength) * 100 + 2} fill="#e0f2fe" fontSize="3" fontWeight="700">
+                      {index + 1}
+                    </text>
+                  </g>
+                ))}
+              </svg>
+
+              <div className="mt-3 grid gap-2 text-xs text-slate-400 sm:grid-cols-3">
+                <div className="rounded-lg border border-white/10 bg-white/[0.035] px-3 py-2">
+                  Points: <span className="font-bold text-white">{plotPolygon.length}</span>
+                </div>
+                <div className="rounded-lg border border-white/10 bg-white/[0.035] px-3 py-2">
+                  Approx area: <span className="font-bold text-white">{Math.round(tracedArea).toLocaleString('en-IN')} sq ft</span>
+                </div>
+                <div className="rounded-lg border border-white/10 bg-white/[0.035] px-3 py-2">
+                  Road: <span className="font-bold uppercase text-white">{roadSide}</span>
+                </div>
+              </div>
+              <p className="mt-3 flex items-center gap-2 text-xs leading-5 text-slate-500">
+                <MousePointer2 size={14} className="text-cyan-200" /> If detection misses the edge, click around the visible boundary to add correction points.
+              </p>
+            </section>
+          )}
 
           <section>
             <p className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-200">
@@ -123,7 +400,7 @@ export default function Map2DGenerator() {
                   onClick={() => setRoadSide(side)}
                   className={classNames(
                     'rounded-lg border p-3 text-left text-sm font-semibold uppercase tracking-[0.12em]',
-                    roadSide === side ? 'border-cyan-300/60 bg-cyan-300/10 text-cyan-100' : 'border-white/10 bg-white/[0.035] text-slate-400'
+                    glowClass(side === 'north' || side === 'east' ? 'cyan' : 'amber', roadSide === side)
                   )}
                 >
                   {side}
@@ -144,12 +421,61 @@ export default function Map2DGenerator() {
                   onClick={() => setHouseType(type)}
                   className={classNames(
                     'rounded-lg border p-4 text-left text-lg font-bold uppercase',
-                    houseType === type ? 'border-emerald-300/60 bg-emerald-300/10 text-emerald-100' : 'border-white/10 bg-white/[0.035] text-slate-300'
+                    glowClass('emerald', houseType === type)
                   )}
                 >
                   {type}
                 </button>
               ))}
+            </div>
+          </section>
+
+          <section className="lg:col-span-2 grid gap-4 md:grid-cols-[220px_minmax(0,1fr)]">
+            <div>
+              <p className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-200">
+                <Ruler size={17} className="text-cyan-200" /> Bathrooms
+              </p>
+              <div className="grid grid-cols-3 gap-2">
+                {[1, 2, 3].map(count => (
+                  <button
+                    key={count}
+                    type="button"
+                    onClick={() => setBathrooms(count)}
+                    className={classNames(
+                      'rounded-lg border p-3 text-center text-lg font-bold',
+                      glowClass('violet', bathrooms === count)
+                    )}
+                  >
+                    {count}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-200">
+                <Sparkles size={17} className="text-cyan-200" /> Planning style
+              </p>
+              <div className="grid gap-2 sm:grid-cols-3">
+                {[
+                  { value: 'compact' as const, label: 'Compact', desc: 'More rooms in less area.' },
+                  { value: 'family' as const, label: 'Family', desc: 'Balanced living and bedrooms.' },
+                  { value: 'premium' as const, label: 'Premium', desc: 'Larger lounge and cleaner zoning.' },
+                ].map(option => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setPlanStyle(option.value)}
+                    className={classNames(
+                      'rounded-lg border p-3 text-left transition-all',
+                      glowClass(option.value === 'premium' ? 'violet' : option.value === 'compact' ? 'amber' : 'emerald', planStyle === option.value)
+                    )}
+                  >
+                    <span className="block text-sm font-bold">{option.label}</span>
+                    <span className="mt-1 block text-xs leading-5">{option.desc}</span>
+                  </button>
+                ))}
+              </div>
             </div>
           </section>
 
@@ -160,6 +486,19 @@ export default function Map2DGenerator() {
               onChange={event => setCity(event.target.value)}
               className="w-full bg-transparent text-lg font-semibold text-white outline-none placeholder:text-slate-600"
               placeholder="Lucknow, Pune, Mumbai..."
+            />
+          </label>
+
+          <label className="lg:col-span-2 rounded-lg border border-cyan-300/15 bg-cyan-300/[0.035] p-4">
+            <span className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-cyan-100">
+              <Sparkles size={15} /> AI design brief
+            </span>
+            <textarea
+              value={aiBrief}
+              onChange={event => setAiBrief(event.target.value)}
+              rows={3}
+              className="w-full resize-none bg-transparent text-sm font-medium leading-6 text-white outline-none placeholder:text-slate-600"
+              placeholder="Example: modern open kitchen, private master bedroom, puja near entry, more daylight, less corridor..."
             />
           </label>
 
@@ -175,7 +514,7 @@ export default function Map2DGenerator() {
                 onClick={() => set(!value)}
                 className={classNames(
                   'flex min-h-20 items-center gap-3 rounded-lg border p-4 text-left transition-all',
-                  value ? 'border-amber-300/50 bg-amber-300/10 text-amber-50' : 'border-white/10 bg-white/[0.035] text-slate-400'
+                  glowClass(label === 'Vastu assist' ? 'amber' : label === 'Parking bay' ? 'emerald' : 'violet', value)
                 )}
               >
                 <Icon size={20} />
@@ -196,7 +535,7 @@ export default function Map2DGenerator() {
             type="button"
             onClick={generate}
             disabled={generating}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-cyan-300 px-5 py-3.5 text-sm font-bold text-slate-950 transition-colors hover:bg-cyan-200"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-cyan-300 via-sky-300 to-blue-400 px-5 py-3.5 text-sm font-bold text-slate-950 shadow-[0_0_34px_rgba(34,211,238,0.24)] transition-all duration-300 hover:-translate-y-0.5 hover:from-cyan-200 hover:via-sky-200 hover:to-blue-300 hover:shadow-[0_0_48px_rgba(56,189,248,0.42)] disabled:translate-y-0 disabled:opacity-60"
           >
             {generating ? 'Generating clean JPEG map...' : 'Generate futuristic JPEG map'} <ArrowRight size={18} />
           </button>

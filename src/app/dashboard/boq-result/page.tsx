@@ -380,5 +380,5 @@ export default function BOQResultsPage() {
     }>
       <BOQResultsPageContent />
     </Suspense>
-  );
+   );
 }

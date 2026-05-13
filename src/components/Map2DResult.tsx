@@ -2,15 +2,21 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, CheckCircle2, Sparkles } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
 import Map2DCanvas from '@/components/Map2DCanvas';
 import { MAP2D_STORAGE_KEY } from '@/components/Map2DGenerator';
 import type { Map2DLayout } from '@/types/map2d';
+
+function titleCase(value?: string) {
+  if (!value) return 'Family';
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
 
 export default function Map2DResult() {
   const [layout, setLayout] = useState<Map2DLayout | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [canvasReady, setCanvasReady] = useState(false);
+  const [briefOpen, setBriefOpen] = useState(false);
 
   useEffect(() => {
     const raw = sessionStorage.getItem(MAP2D_STORAGE_KEY);
@@ -80,36 +86,78 @@ export default function Map2DResult() {
         </Link>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
         <Map2DCanvas layout={layout} />
 
-        <aside className="rounded-lg border border-white/10 bg-slate-950/75 p-5 shadow-2xl shadow-black/40">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">AI assistant checks</p>
-          <p className="mt-2 text-sm leading-6 text-slate-400">
-            Clean geometry, readable labels, and design checks separated from the JPEG so the map stays crisp.
-          </p>
-          <div className="mt-5 space-y-3">
-            {Object.entries(layout.score).map(([key, value]) => (
-              <div key={key} className="rounded-lg border border-white/10 bg-white/[0.035] p-3">
-                <div className="mb-2 flex items-center justify-between text-sm">
-                  <span className="capitalize text-slate-300">{key}</span>
-                  <span className="font-bold text-white">{value}%</span>
+        <aside className="rounded-lg border border-cyan-300/15 bg-slate-950/75 p-4 shadow-2xl shadow-cyan-950/10">
+          <div className="rounded-lg border border-white/10 bg-white/[0.035] p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-cyan-100">Client plan brief</p>
+            <h2 className="mt-3 text-xl font-bold leading-tight text-white">
+              {layout.aiPlan?.conceptTitle ?? `${titleCase(layout.input.planStyle)} ${layout.input.houseType.toUpperCase()} Plan`}
+            </h2>
+            <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
+              {[
+                [layout.input.houseType.toUpperCase(), 'Configuration'],
+                [`${layout.input.bathrooms ?? 2} Bath`, 'Bathrooms'],
+                [titleCase(layout.input.planStyle), 'Style'],
+                [`${Math.max(...Object.values(layout.score))}%`, 'Top score'],
+              ].map(([value, label]) => (
+                <div key={label} className="rounded-lg border border-cyan-300/10 bg-cyan-300/[0.045] p-3">
+                  <p className="font-bold text-white">{value}</p>
+                  <p className="mt-1 uppercase tracking-[0.12em] text-slate-500">{label}</p>
                 </div>
-                <div className="h-2 overflow-hidden rounded-full bg-white/10">
-                  <div className="h-full rounded-full bg-cyan-300" style={{ width: `${value}%` }} />
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => setBriefOpen(value => !value)}
+              className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-cyan-300/20 bg-cyan-300/10 px-4 py-3 text-sm font-bold text-cyan-50 transition-all duration-300 hover:-translate-y-0.5 hover:border-cyan-200/70 hover:bg-cyan-300/15 hover:shadow-[0_0_28px_rgba(34,211,238,0.22)]"
+            >
+              {briefOpen ? 'Collapse brief' : 'Expand brief'} {briefOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            </button>
           </div>
 
-          <div className="mt-5 space-y-3">
-            {layout.aiNotes.map(note => (
-              <div key={note} className="flex gap-2 rounded-lg border border-white/10 bg-white/[0.03] p-3 text-xs leading-5 text-slate-400">
-                <CheckCircle2 className="mt-0.5 shrink-0 text-cyan-300" size={14} />
-                <span>{note}</span>
+          {briefOpen && (
+            <div className="mt-4 overflow-hidden rounded-lg border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.12),transparent_34%),rgba(2,6,23,0.92)] p-4 shadow-[0_0_60px_rgba(8,145,178,0.12)]">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                <Sparkles size={14} className="text-cyan-200" /> Design intelligence
               </div>
-            ))}
-          </div>
+              <div className="mt-4 space-y-3">
+                {Object.entries(layout.score).map(([key, value]) => (
+                  <div key={key} className="rounded-lg border border-white/10 bg-white/[0.04] p-3">
+                    <div className="mb-2 flex items-center justify-between text-sm">
+                      <span className="capitalize text-slate-300">{key}</span>
+                      <span className="font-bold text-white">{value}%</span>
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-white/10">
+                      <div className="h-full rounded-full bg-gradient-to-r from-cyan-300 to-emerald-300" style={{ width: `${value}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-4">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Room schedule</p>
+                <div className="space-y-2">
+                  {layout.rooms.slice(0, 8).map(room => (
+                    <div key={room.id} className="flex items-center justify-between rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-xs">
+                      <span className="font-semibold text-slate-200">{room.label}</span>
+                      <span className="text-slate-500">{Math.round(room.width * room.height)} sq ft</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-4 space-y-2">
+                {layout.aiNotes.map(note => (
+                  <div key={note} className="flex gap-2 rounded-lg border border-white/10 bg-white/[0.03] p-3 text-xs leading-5 text-slate-400">
+                    <CheckCircle2 className="mt-0.5 shrink-0 text-cyan-300" size={14} />
+                    <span>{note}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </aside>
       </div>
     </div>
