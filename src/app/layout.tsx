@@ -1,5 +1,6 @@
 import './globals.css';
 import Navbar from '@/components/Navbar';
+import PageTransition from '@/components/PageTransition';
 import SessionWrapper from '@/components/SessionWrapper';
 
 export const metadata = {
@@ -17,7 +18,7 @@ export default function RootLayout({
       <body className="bg-black text-white antialiased overflow-x-hidden transition-colors duration-300">
         <SessionWrapper>
           <Navbar />
-          {children}
+          <PageTransition>{children}</PageTransition>
         </SessionWrapper>
       </body>
     </html>
