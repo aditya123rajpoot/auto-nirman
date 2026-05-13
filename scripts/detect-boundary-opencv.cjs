@@ -1,9 +1,5 @@
-const cvReady = require('@techstark/opencv-js');
+const cvReady = require(process.env.OPENCV_JS_PATH || '@techstark/opencv-js');
 const fs = require('fs');
-
-function debug(message) {
-  if (process.env.OPENCV_DEBUG) process.stderr.write(`${message}\n`);
-}
 
 function simplifyPoints(points, maxPoints = 10) {
   if (points.length <= maxPoints) return points;
@@ -46,7 +42,6 @@ function detect(cv, body) {
   let hull = null;
 
   try {
-    debug('running cv');
     cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
     cv.GaussianBlur(gray, blurred, new cv.Size(5, 5), 0, 0, cv.BORDER_DEFAULT);
     cv.Canny(blurred, edges, 45, 140);
@@ -101,7 +96,6 @@ function detect(cv, body) {
         corners: points.length,
       },
     }));
-    debug('done');
     process.exit(0);
   } finally {
     src.delete();
@@ -127,12 +121,9 @@ function fail(error) {
 try {
   const payloadPath = process.argv[2];
   if (!payloadPath) throw new Error('Payload path is required.');
-  debug('reading payload');
   const body = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
-  debug('waiting for opencv');
   cvReady.then(cv => {
     try {
-      debug('opencv ready');
       detect(cv, body);
     } catch (error) {
       fail(error);

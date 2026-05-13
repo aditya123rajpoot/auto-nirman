@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FaRobot, FaChartLine, FaFileUpload, FaShieldAlt,
-  FaBolt, FaCheckCircle, FaArrowRight, FaArrowLeft, FaTimes, FaCalculator
+  FaBolt, FaCheckCircle, FaArrowRight, FaArrowLeft, FaTimes, FaCalculator, FaMap
 } from 'react-icons/fa';
 
 const steps = [
@@ -55,11 +55,11 @@ const steps = [
         <motion.div
           animate={{ y: [-8, 8, -8] }}
           transition={{ duration: 2, repeat: Infinity }}
-          className="w-48 h-32 border-2 border-dashed border-blue-400/50 rounded-2xl flex flex-col items-center justify-center bg-blue-500/5"
+          className="w-48 h-32 border border-blue-400/30 rounded-2xl flex flex-col items-center justify-center bg-blue-500/5"
         >
           <FaFileUpload className="text-blue-400 text-3xl mb-2" />
-          <p className="text-slate-400 text-xs">Drop BOQ here</p>
-          <p className="text-slate-600 text-xs">.xlsx / .pdf</p>
+          <p className="text-slate-300 text-xs font-semibold">BOQ file upload</p>
+          <p className="text-slate-600 text-xs">shown inside dashboard</p>
         </motion.div>
         <div className="flex gap-2">
           {['Excel', 'PDF', 'CSV'].map((fmt, i) => (
@@ -255,6 +255,61 @@ const steps = [
   },
   {
     id: 7,
+    icon: FaMap,
+    color: 'from-orange-500 to-cyan-500',
+    glow: '#fb923c',
+    badge: '2D Map Generator',
+    title: 'Generate Clean\n2D Floor Maps',
+    desc: 'Enter plot size, road side, rooms, bathrooms, planning style, and Vastu preference. Auto Nirman creates a futuristic JPEG-ready 2D map with room labels, dimensions, boundaries, and AI design checks.',
+    visual: (
+      <div className="flex flex-col items-center justify-center h-full gap-3 w-full max-w-xs">
+        <motion.div
+          animate={{ y: [-4, 4, -4] }}
+          transition={{ duration: 2.6, repeat: Infinity }}
+          className="w-full rounded-2xl border border-orange-400/25 bg-orange-500/10 p-4"
+        >
+          <div className="flex items-center justify-between border-b border-white/10 pb-3">
+            <span className="text-xs font-semibold text-slate-300">2D Map Output</span>
+            <span className="rounded-full bg-cyan-400/15 px-2 py-0.5 text-[10px] font-bold text-cyan-200">JPEG</span>
+          </div>
+          <div className="mt-4 rounded-xl border-2 border-cyan-300/70 bg-cyan-300/5 p-2">
+            <div className="grid grid-cols-3 gap-1">
+              {[
+                'Living',
+                'Kitchen',
+                'Bed 1',
+                'Bed 2',
+                'Bath',
+                'Stair',
+              ].map((room, i) => (
+                <motion.div
+                  key={room}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: i * 0.08 + 0.25 }}
+                  className={`min-h-12 rounded border px-1 py-2 text-center text-[10px] font-bold ${
+                    i % 3 === 0
+                      ? 'border-cyan-300/50 bg-cyan-300/10 text-cyan-100'
+                      : i % 3 === 1
+                        ? 'border-orange-300/50 bg-orange-300/10 text-orange-100'
+                        : 'border-violet-300/50 bg-violet-300/10 text-violet-100'
+                  }`}
+                >
+                  {room}
+                </motion.div>
+              ))}
+            </div>
+          </div>
+          <div className="mt-4 flex items-center justify-between text-[10px] text-slate-400">
+            <span>Boundary checked</span>
+            <span>AI score 91%</span>
+          </div>
+        </motion.div>
+      </div>
+    ),
+  },
+  {
+    id: 8,
     icon: FaShieldAlt,
     color: 'from-amber-500 to-orange-500',
     glow: '#f59e0b',
@@ -275,6 +330,7 @@ const steps = [
             'BOQ Analysis ready',
             'AI Chatbot active',
             'Cost Estimator live',
+            '2D Map Generator live',
             'Reports enabled',
           ].map((item, i) => (
             <motion.div

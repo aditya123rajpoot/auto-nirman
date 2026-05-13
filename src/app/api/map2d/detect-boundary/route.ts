@@ -23,8 +23,10 @@ async function runOpenCVWorker(body: DetectBoundaryRequest) {
 
   return new Promise<{ status: number; payload: unknown }>(resolve => {
     const scriptPath = path.join(process.cwd(), 'scripts', 'detect-boundary-opencv.cjs');
+    const opencvPath = path.join(process.cwd(), 'node_modules', '@techstark', 'opencv-js', 'dist', 'opencv.js');
     const child = spawn(process.execPath, [scriptPath, payloadPath], {
       cwd: process.cwd(),
+      env: { ...process.env, OPENCV_JS_PATH: opencvPath },
       stdio: ['ignore', 'pipe', 'pipe'],
     });
 

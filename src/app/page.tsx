@@ -1,466 +1,302 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
 import Image from 'next/image';
-import dynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import {
+  FaArrowRight,
+  FaBolt,
+  FaBuilding,
+  FaCalculator,
+  FaCheckCircle,
+  FaFileInvoiceDollar,
+  FaMap,
+  FaRobot,
+} from 'react-icons/fa';
 import RobotAssistant from '@/components/RobotAssistant';
-import { FaCheckCircle, FaArrowRight, FaStar, FaQuoteLeft, FaChartLine, FaLock, FaLightbulb } from 'react-icons/fa';
+import OnboardingWizard from '@/components/OnboardingWizard';
 
-import constructionAnim from '@/lotties/construction.json';
-import aiAnim from '@/lotties/ai.json';
-import blueprintAnim from '@/lotties/blueprint.json';
-
-const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
-
-const features = [
-  {
-    lottie: constructionAnim,
-    title: 'BOQ Analysis',
-    desc: 'Upload your Bill of Quantities and detect cost leakages instantly with AI precision.',
-    icon: FaChartLine,
-  },
-  {
-    lottie: aiAnim,
-    title: 'AI Cost Intelligence',
-    desc: 'Compare vendor rates against benchmarks and flag anomalies before they drain your budget.',
-    icon: FaLightbulb,
-  },
-  {
-    lottie: blueprintAnim,
-    title: 'Smart Planning',
-    desc: 'Generate construction plans, timelines and risk reports — all in one place.',
-    icon: FaLock,
-  },
+const proof = [
+  { value: '15-20%', label: 'cost clarity' },
+  { value: '95%', label: 'BOQ accuracy' },
+  { value: '10x', label: 'faster review' },
 ];
 
-const stats = [
-  { value: '15–20%', label: 'Average savings per project' },
-  { value: '95%', label: 'BOQ accuracy rate' },
-  { value: '10x', label: 'Faster than manual audits' },
-  { value: '500+', label: 'Projects analysed' },
+const tools = [
+  { icon: FaBuilding, title: 'BOQ leakage', text: 'Understand where project cost can quietly increase.', tone: 'from-cyan-300 to-blue-500' },
+  { icon: FaCalculator, title: 'Budget clarity', text: 'Estimate the cost envelope before contractor discussions.', tone: 'from-emerald-300 to-teal-400' },
+  { icon: FaMap, title: 'Planning output', text: 'Turn plot information into a client-ready visual direction.', tone: 'from-orange-300 to-cyan-400' },
+  { icon: FaRobot, title: 'AI guidance', text: 'Get simple answers when construction decisions feel unclear.', tone: 'from-violet-300 to-fuchsia-400' },
 ];
 
-const socialProofStats = [
-  {
-    value: '15–20%',
-    label: 'Cost saved per project',
-    desc: 'BOQ errors and vendor inflation caught before construction begins — saving crores on large projects.',
-  },
-  {
-    value: '95%',
-    label: 'BOQ accuracy rate',
-    desc: 'Our AI flags duplicate line items, inflated rates, and missing quantities that manual review misses.',
-  },
-  {
-    value: '10x',
-    label: 'Faster than manual audit',
-    desc: 'What takes a team days, Auto Nirman does in minutes — with detailed PDF reports ready for board meetings.',
-  },
-];
-
-const pricingPlans = [
-  {
-    name: 'Starter',
-    price: '₹700',
-    desc: 'Perfect for individual developers & small firms',
-    features: ['1 BOQ Analysis', 'PDF Report', 'Email Support', '30 days validity'],
-  },
-  {
-    name: 'Professional',
-    price: '₹2,000',
-    desc: 'Most popular for mid-size developers',
-    features: ['5 BOQ Analyses', 'Priority Support', 'Custom Benchmarks', 'API Access', '90 days validity'],
-    popular: true,
-  },
-  {
-    name: 'Enterprise',
-    price: 'Custom',
-    desc: 'For large-scale operations',
-    features: ['Unlimited Analyses', 'Dedicated Manager', 'Custom Integration', 'Training Included', 'Annual contract'],
-  },
+const steps = [
+  { icon: FaFileInvoiceDollar, title: 'Enter project details', text: 'Upload BOQ, add area, or give plot inputs.' },
+  { icon: FaBolt, title: 'Get an intelligent check', text: 'Auto Nirman finds cost gaps, budget risk, and planning issues.' },
+  { icon: FaCheckCircle, title: 'Use the output', text: 'Download a report, estimate, or map for the next meeting.' },
 ];
 
 export default function Home() {
   const router = useRouter();
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.2, delayChildren: 0.3 },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.8 } },
-  };
+  const [showTour, setShowTour] = useState(false);
 
   return (
-    <main className="relative bg-black text-white overflow-hidden">
-
-      {/* ── Background ── */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,_#38bdf811_1px,_transparent_0)] [background-size:18px_18px] opacity-10" />
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 via-purple-900/10 to-black" />
+    <main className="relative min-h-screen overflow-hidden bg-[#04070d] text-white">
+      <div className="pointer-events-none fixed inset-0">
+        <div className="absolute inset-0 bg-[linear-gradient(135deg,#04070d,#071525_48%,#020304)]" />
+        <div className="absolute inset-0 opacity-[0.06] bg-[linear-gradient(rgba(125,211,252,0.7)_1px,transparent_1px),linear-gradient(90deg,rgba(125,211,252,0.7)_1px,transparent_1px)] [background-size:46px_46px]" />
+        <div className="absolute left-[-220px] top-[-140px] h-[560px] w-[560px] rounded-full border border-cyan-200/10" />
+        <div className="absolute right-[-220px] top-24 h-[640px] w-[640px] rounded-full border border-orange-200/10" />
       </div>
 
-      {/* ── HERO ── */}
-      <section className="relative z-10 min-h-screen flex flex-col items-center justify-center text-center px-4 pt-20">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+      <DesktopHome push={router.push} openTour={() => setShowTour(true)} />
+      <MobileHome push={router.push} openTour={() => setShowTour(true)} />
 
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-        >
-          <Image
-            src="/logo.png"
-            alt="Auto Nirman Logo"
-            width={100}
-            height={100}
-            className="mx-auto mb-6 drop-shadow-[0_0_20px_#38bdf8] animate-pulse"
-          />
-        </motion.div>
+      <div className="hidden md:block">
+        <RobotAssistant />
+      </div>
 
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className="inline-flex items-center gap-2 bg-blue-400/10 border border-blue-400/30 rounded-full px-4 py-1.5 text-blue-300 text-sm mb-6"
-        >
-          <span className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
-          AI-Powered Infrastructure Intelligence
-        </motion.div>
-
-        <motion.h1
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="text-5xl md:text-7xl font-extrabold leading-tight mb-6 max-w-4xl"
-        >
-          <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">
-            Build Smarter.
-          </span>
-          <br />
-          <span className="text-white">Save Crores.</span>
-        </motion.h1>
-
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, delay: 0.3 }}
-          className="text-lg md:text-xl text-slate-400 max-w-2xl mb-10"
-        >
-          Auto Nirman detects cost leakage in your BOQ before construction begins.
-          Even a 1% error on a ₹100Cr project costs ₹1 Crore. We fix that.
-        </motion.p>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.4 }}
-          className="flex flex-col sm:flex-row gap-4"
-        >
-          <motion.button
-            whileHover={{ scale: 1.05, boxShadow: '0 0 30px #38bdf8' }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => router.push('/login')}
-            className="bg-blue-500 hover:bg-blue-400 px-8 py-4 rounded-xl text-lg font-semibold shadow-[0_0_20px_#38bdf855] transition-all flex items-center justify-center gap-2"
-          >
-            Get Started Free
-            <FaArrowRight size={16} />
-          </motion.button>
-
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => router.push('/dashboard')}
-            className="border border-white/20 hover:border-blue-400 px-8 py-4 rounded-xl text-lg font-semibold transition-all hover:shadow-[0_0_20px_#38bdf833]"
-          >
-            View Dashboard →
-          </motion.button>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.75 }}
-          className="mt-12 hidden flex-col items-center sm:flex"
-          aria-hidden="true"
-        >
-          <div className="relative h-9 w-5 rounded-full border border-cyan-200/20 bg-white/[0.025] shadow-[0_0_18px_rgba(56,189,248,0.08)]">
-            <motion.span
-              animate={{ y: [5, 16, 5], opacity: [0.28, 0.85, 0.28] }}
-              transition={{ repeat: Infinity, duration: 1.8, ease: 'easeInOut' }}
-              className="absolute left-1/2 top-0 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-cyan-200/65"
-            />
-          </div>
-        </motion.div>
-      </section>
-
-      {/* ── STATS ── */}
-      <section className="relative z-10 py-20 px-4">
-        <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6">
-          {stats.map((stat, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-              className="bg-white/5 backdrop-blur border border-white/10 rounded-2xl p-6 text-center hover:border-blue-400/50 transition-all"
-            >
-              <p className="text-3xl font-extrabold text-blue-400 mb-1">{stat.value}</p>
-              <p className="text-xs text-slate-400">{stat.label}</p>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── FEATURES ── */}
-      <section className="relative z-10 py-20 px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="max-w-5xl mx-auto text-center mb-16"
-        >
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Everything you need to{' '}
-            <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
-              eliminate waste
-            </span>
-          </h2>
-          <p className="text-slate-400">
-            Built specifically for Indian real estate developers managing complex, high-value projects.
-          </p>
-        </motion.div>
-
-        <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
-          {features.map((feature, i) => {
-            const IconComponent = feature.icon;
-            return (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.15 }}
-                whileHover={{ scale: 1.03, borderColor: '#38bdf8' }}
-                className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6 flex flex-col items-center text-center hover:shadow-[0_0_30px_#38bdf822] transition-all group"
-              >
-                <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-20 h-1 bg-gradient-to-r from-transparent via-blue-400 to-transparent rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="w-32 h-32 mb-4">
-                  <Lottie animationData={feature.lottie} loop autoplay />
-                </div>
-                <IconComponent className="text-blue-400 text-2xl mb-3 opacity-70" />
-                <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
-                <p className="text-sm text-slate-400 leading-relaxed">{feature.desc}</p>
-              </motion.div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* ── HOW IT WORKS ── */}
-      <section className="relative z-10 py-20 px-4">
-        <motion.h2
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-3xl md:text-4xl font-bold text-center mb-16"
-        >
-          How it works
-        </motion.h2>
-        <div className="max-w-3xl mx-auto space-y-6">
-          {[
-            { step: '01', title: 'Upload your BOQ', desc: 'Drop your Excel or PDF Bill of Quantities into Auto Nirman in seconds.' },
-            { step: '02', title: 'AI analyzes instantly', desc: 'Our engine compares every line item against benchmark rates and flags anomalies.' },
-            { step: '03', title: 'Get your leakage report', desc: 'Download a detailed PDF showing exactly where money is being lost and how to fix it.' },
-          ].map((item, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.15 }}
-              className="flex items-start gap-6 bg-white/5 backdrop-blur border border-white/10 rounded-2xl p-6 hover:border-blue-400/40 transition-all group"
-            >
-              <span className="text-4xl font-extrabold text-blue-400/30 shrink-0 group-hover:text-blue-400/50 transition-colors">{item.step}</span>
-              <div className="text-left">
-                <h3 className="text-lg font-semibold mb-1">{item.title}</h3>
-                <p className="text-sm text-slate-400">{item.desc}</p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── SOCIAL PROOF (replaced fake testimonials) ── */}
-      <section className="relative z-10 py-20 px-4">
-        <motion.h2
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-3xl md:text-4xl font-bold text-center mb-16"
-        >
-          Trusted by developers across India
-        </motion.h2>
-        <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
-          {socialProofStats.map((item, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-              className="bg-white/5 backdrop-blur border border-white/10 rounded-2xl p-6 flex flex-col"
-            >
-              <p className="text-4xl font-extrabold text-blue-400 mb-2">{item.value}</p>
-              <p className="text-sm font-semibold text-white mb-3">{item.label}</p>
-              <p className="text-sm text-slate-400 leading-relaxed">{item.desc}</p>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── PRICING ── */}
-      <section className="relative z-10 py-20 px-4">
-        <motion.h2
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-3xl md:text-4xl font-bold text-center mb-4"
-        >
-          Simple, transparent pricing
-        </motion.h2>
-        <p className="text-center text-slate-400 mb-16 max-w-lg mx-auto">
-          Choose the plan that fits your project needs. All plans include full access to our AI engine.
-        </p>
-        <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
-          {pricingPlans.map((plan, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-              className={`rounded-2xl p-8 border transition-all ${
-                plan.popular
-                  ? 'bg-blue-500/10 border-blue-400/50 shadow-[0_0_30px_#38bdf822] scale-105'
-                  : 'bg-white/5 border-white/10 hover:border-white/30'
-              }`}
-            >
-              {plan.popular && (
-                <div className="inline-block bg-blue-400/20 border border-blue-400/30 rounded-full px-3 py-1 text-xs text-blue-300 font-semibold mb-4">
-                  Most Popular
-                </div>
-              )}
-              <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
-              <p className="text-slate-400 text-sm mb-4">{plan.desc}</p>
-              <p className="text-3xl font-extrabold text-blue-400 mb-6">{plan.price}</p>
-              <button
-                onClick={() => router.push('/login')}
-                className={`w-full py-2.5 rounded-lg font-semibold text-sm mb-6 transition-all ${
-                  plan.popular
-                    ? 'bg-blue-500 hover:bg-blue-400 text-white'
-                    : 'border border-white/20 hover:border-blue-400 text-white'
-                }`}
-              >
-                Get Started
-              </button>
-              <ul className="space-y-3">
-                {plan.features.map((feature, j) => (
-                  <li key={j} className="flex items-center gap-3 text-sm text-slate-300">
-                    <FaCheckCircle className="text-blue-400 shrink-0" size={14} />
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── CTA ── */}
-      <section className="relative z-10 py-24 px-4 text-center">
-        <div className="absolute inset-0 bg-blue-500/5 pointer-events-none" />
-        <motion.h2
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-3xl md:text-5xl font-extrabold mb-6"
-        >
-          Ready to save{' '}
-          <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
-            15–20% on every project?
-          </span>
-        </motion.h2>
-        <motion.p
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          className="text-slate-400 mb-10 max-w-xl mx-auto"
-        >
-          Join developers across India who are using Auto Nirman to eliminate cost leakage on every project.
-        </motion.p>
-        <motion.button
-          whileHover={{ scale: 1.05, boxShadow: '0 0 40px #38bdf8' }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => router.push('/login')}
-          className="bg-blue-500 hover:bg-blue-400 px-10 py-4 rounded-xl text-xl font-bold shadow-[0_0_30px_#38bdf855] transition-all inline-flex items-center gap-2"
-        >
-          Start Free Trial
-          <FaArrowRight />
-        </motion.button>
-      </section>
-
-      {/* ── FOOTER ── */}
-      <footer className="relative z-10 border-t border-white/10 py-12 px-4">
-        <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-          <div>
-            <h4 className="font-semibold mb-3">Product</h4>
-            <ul className="space-y-2 text-sm text-slate-400">
-              <li><a href="#" className="hover:text-white transition">Features</a></li>
-              <li><a href="#" className="hover:text-white transition">Pricing</a></li>
-              <li><a href="#" className="hover:text-white transition">Security</a></li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="font-semibold mb-3">Company</h4>
-            <ul className="space-y-2 text-sm text-slate-400">
-              <li><a href="#" className="hover:text-white transition">About</a></li>
-              <li><a href="#" className="hover:text-white transition">Blog</a></li>
-              <li><a href="#" className="hover:text-white transition">Contact</a></li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="font-semibold mb-3">Legal</h4>
-            <ul className="space-y-2 text-sm text-slate-400">
-              <li><a href="#" className="hover:text-white transition">Privacy</a></li>
-              <li><a href="#" className="hover:text-white transition">Terms</a></li>
-              <li><a href="#" className="hover:text-white transition">Cookies</a></li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="font-semibold mb-3">Follow</h4>
-            <ul className="space-y-2 text-sm text-slate-400">
-              <li><a href="#" className="hover:text-white transition">Twitter</a></li>
-              <li><a href="#" className="hover:text-white transition">LinkedIn</a></li>
-              <li><a href="#" className="hover:text-white transition">GitHub</a></li>
-            </ul>
-          </div>
-        </div>
-        <div className="border-t border-white/10 pt-8 text-center text-slate-500 text-sm">
-          <p>© 2025 Auto Nirman. Built for Indian real estate developers.</p>
-          <p className="mt-1">Lucknow, Uttar Pradesh 🇮🇳</p>
-        </div>
-      </footer>
-
-      <RobotAssistant />
+      <AnimatePresence>
+        {showTour && <OnboardingWizard onComplete={() => setShowTour(false)} />}
+      </AnimatePresence>
     </main>
   );
 }
 
+function DesktopHome({ push, openTour }: { push: (href: string) => void; openTour: () => void }) {
+  return (
+    <div className="relative z-10 hidden md:block">
+      <section className="mx-auto grid min-h-screen max-w-7xl grid-cols-[minmax(0,0.9fr)_minmax(420px,1.1fr)] items-center gap-8 px-6 pb-16 pt-24 lg:px-8">
+        <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
+          <div className="inline-flex items-center gap-3 rounded-full border border-cyan-300/25 bg-cyan-300/10 px-4 py-2 text-xs font-black uppercase tracking-[0.16em] text-cyan-100">
+            <span className="h-2 w-2 rounded-full bg-emerald-300 shadow-[0_0_18px_rgba(110,231,183,0.75)]" />
+            Built for Indian construction teams
+          </div>
+
+          <h1 className="mt-7 max-w-4xl text-6xl font-black leading-[0.96] tracking-normal text-white lg:text-7xl">
+            Build smarter. Spend cleaner.
+          </h1>
+          <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-400">
+            Auto Nirman turns BOQs, project details, and plot inputs into clear construction decisions: cost reports, budget estimates, AI answers, and client-ready 2D plans.
+          </p>
+
+          <div className="mt-8 flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={openTour}
+              className="group inline-flex items-center gap-3 rounded-lg bg-cyan-300 px-6 py-4 text-sm font-black uppercase tracking-[0.11em] text-slate-950 shadow-[0_0_34px_rgba(34,211,238,0.28)] transition hover:-translate-y-1 hover:bg-cyan-200"
+            >
+              What Auto Nirman does <FaArrowRight className="transition group-hover:translate-x-1" />
+            </button>
+            <button
+              type="button"
+              onClick={() => push('/login')}
+              className="rounded-lg border border-cyan-300/20 bg-cyan-300/10 px-5 py-4 text-sm font-bold text-cyan-100 transition hover:-translate-y-1 hover:border-cyan-300/45 hover:bg-cyan-300/15"
+            >
+              Login
+            </button>
+            <button
+              type="button"
+              onClick={() => push('/signup')}
+              className="rounded-lg border border-emerald-300/20 bg-emerald-300/10 px-5 py-4 text-sm font-bold text-emerald-100 transition hover:-translate-y-1 hover:border-emerald-300/45 hover:bg-emerald-300/15"
+            >
+              Sign up
+            </button>
+            <button
+              type="button"
+              onClick={() => push('/dashboard')}
+              className="rounded-lg border border-white/15 bg-white/[0.04] px-6 py-4 text-sm font-bold text-white transition hover:-translate-y-1 hover:border-orange-300/45 hover:bg-orange-300/10"
+            >
+              Preview workspace
+            </button>
+          </div>
+
+          <div className="mt-9 grid max-w-2xl grid-cols-3 gap-3">
+            {proof.map(item => (
+              <div key={item.label} className="rounded-lg border border-white/10 bg-slate-950 px-4 py-4">
+                <p className="text-3xl font-black text-white">{item.value}</p>
+                <p className="mt-1 text-xs font-semibold text-slate-500">{item.label}</p>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, x: 26 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.75, delay: 0.08 }}>
+          <ProductVisual />
+        </motion.div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-6 py-10 lg:px-8">
+        <div className="mb-7 max-w-3xl">
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">What Auto Nirman does</p>
+          <h2 className="mt-2 text-4xl font-black tracking-normal text-white">It prepares you before money starts moving.</h2>
+        </div>
+        <div className="grid grid-cols-4 gap-4">
+          {tools.map(tool => (
+            <div
+              key={tool.title}
+              className="rounded-lg border border-white/10 bg-slate-950 p-5 text-left shadow-[0_18px_60px_rgba(0,0,0,0.28)]"
+            >
+              <div className={`h-1.5 w-16 rounded-full bg-gradient-to-r ${tool.tone}`} />
+              <tool.icon className="mt-6 text-cyan-100" size={24} />
+              <h2 className="mt-6 text-xl font-black text-white">{tool.title}</h2>
+              <p className="mt-3 text-sm leading-6 text-slate-400">{tool.text}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
+        <div className="mb-8 max-w-2xl">
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Workflow</p>
+          <h2 className="mt-2 text-5xl font-black tracking-normal text-white">Simple enough for daily use.</h2>
+        </div>
+        <div className="grid grid-cols-3 gap-4">
+          {steps.map((step, index) => (
+            <div key={step.title} className="rounded-lg border border-white/10 bg-white/[0.035] p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-cyan-200/20 bg-cyan-300/10 text-cyan-100">
+                  <step.icon />
+                </div>
+                <span className="text-xs font-black text-cyan-100">0{index + 1}</span>
+              </div>
+              <h3 className="mt-6 text-xl font-black text-white">{step.title}</h3>
+              <p className="mt-3 text-sm leading-6 text-slate-400">{step.text}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <footer className="border-t border-white/10 px-8 py-8">
+        <div className="mx-auto flex max-w-7xl items-center justify-between text-sm text-slate-500">
+          <span>Auto Nirman</span>
+          <span>BOQ. Cost. Map. AI.</span>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+function MobileHome({ push, openTour }: { push: (href: string) => void; openTour: () => void }) {
+  return (
+    <div className="relative z-10 mx-auto max-w-md px-4 pb-10 pt-20 md:hidden">
+      <section className="rounded-lg border border-white/10 bg-slate-950 p-5 shadow-[0_18px_60px_rgba(0,0,0,0.45)]">
+        <div className="flex items-center justify-between">
+          <div className="inline-flex items-center gap-2 rounded-full border border-cyan-300/25 bg-cyan-300/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-cyan-100">
+            Live workspace
+          </div>
+          <Image src="/logo.png" alt="Auto Nirman" width={38} height={38} className="rounded-lg" priority />
+        </div>
+
+        <h1 className="mt-6 text-4xl font-black leading-[1.02] tracking-normal text-white">
+          Build smarter. Spend cleaner.
+        </h1>
+        <p className="mt-4 text-sm leading-6 text-slate-400">
+          BOQ checks, cost estimates, floor maps, and AI help in one place.
+        </p>
+
+        <div className="mt-6 grid grid-cols-2 gap-2">
+            <button type="button" onClick={() => push('/login')} className="rounded-lg bg-cyan-300 px-4 py-3 text-sm font-black text-slate-950">
+            Login
+          </button>
+          <button type="button" onClick={() => push('/signup')} className="rounded-lg border border-emerald-300/25 bg-emerald-300/10 px-4 py-3 text-sm font-bold text-emerald-100">
+            Sign up
+          </button>
+          <button type="button" onClick={() => push('/dashboard')} className="col-span-2 rounded-lg border border-white/15 bg-white/[0.04] px-4 py-3 text-sm font-bold text-white">
+            Preview
+          </button>
+        </div>
+
+        <button
+          type="button"
+          onClick={openTour}
+          className="mt-3 w-full rounded-lg border border-cyan-300/20 bg-cyan-300/10 px-4 py-3 text-xs font-black text-cyan-100"
+        >
+          What Auto Nirman does
+        </button>
+      </section>
+
+      <section className="mt-3 grid grid-cols-3 gap-2">
+        {proof.map(item => (
+          <div key={item.label} className="rounded-lg border border-white/10 bg-slate-950 p-3 text-center">
+            <p className="text-xl font-black text-white">{item.value}</p>
+            <p className="mt-1 text-[10px] leading-4 text-slate-500">{item.label}</p>
+          </div>
+        ))}
+      </section>
+
+      <section className="mt-4 grid grid-cols-2 gap-2">
+        {tools.map(tool => (
+          <div key={tool.title} className="min-h-28 rounded-lg border border-white/10 bg-slate-950 p-3 text-left">
+            <div className={`mb-3 h-1 w-12 rounded-full bg-gradient-to-r ${tool.tone}`} />
+            <tool.icon className="text-cyan-100" size={17} />
+            <p className="mt-2 text-xs font-black leading-4 text-white">{tool.title}</p>
+            <p className="mt-1 text-[10px] leading-4 text-slate-500">{tool.text}</p>
+          </div>
+        ))}
+      </section>
+    </div>
+  );
+}
+
+function ProductVisual() {
+  return (
+    <div className="relative overflow-hidden rounded-lg border border-white/10 bg-slate-950 p-5 shadow-[0_34px_130px_rgba(0,0,0,0.66)]">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_10%,rgba(34,211,238,0.18),transparent_30%),radial-gradient(circle_at_16%_74%,rgba(251,146,60,0.1),transparent_34%)]" />
+      <div className="relative z-10">
+        <div className="flex items-center justify-between border-b border-white/10 pb-4">
+          <div className="flex items-center gap-3">
+            <Image src="/logo.png" alt="Auto Nirman" width={40} height={40} className="rounded-lg" priority />
+            <div>
+              <p className="text-sm font-black uppercase tracking-[0.16em] text-white">Before construction</p>
+              <p className="text-xs text-slate-500">Onboarding intelligence preview</p>
+            </div>
+          </div>
+          <span className="rounded-full border border-emerald-300/25 bg-emerald-300/10 px-3 py-1 text-xs font-bold text-emerald-100">Ready</span>
+        </div>
+
+        <div className="mt-5 grid grid-cols-[1.1fr_0.9fr] gap-4">
+          <div className="rounded-lg border border-white/10 bg-white/[0.035] p-5">
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Possible saving</p>
+            <p className="mt-4 text-5xl font-black text-cyan-100">Rs 1.8Cr</p>
+            <div className="mt-6 space-y-3">
+              {['Steel rate above benchmark', 'Duplicate finishing item', 'Missing waterproofing scope'].map((item, index) => (
+                <div key={item} className="flex items-center justify-between rounded-lg border border-white/10 bg-slate-950 px-4 py-3">
+                  <span className="text-sm text-slate-300">{item}</span>
+                  <span className={index === 0 ? 'text-orange-200' : index === 1 ? 'text-cyan-200' : 'text-emerald-200'}>Check</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="rounded-lg border border-white/10 bg-white/[0.035] p-4">
+              <p className="text-xs text-slate-500">Budget confidence</p>
+              <p className="mt-2 text-3xl font-black text-white">94%</p>
+              <div className="mt-4 h-2 rounded-full bg-white/10">
+                <div className="h-full w-[94%] rounded-full bg-cyan-300" />
+              </div>
+            </div>
+            <div className="rounded-lg border border-white/10 bg-white/[0.035] p-4">
+              <p className="text-xs text-slate-500">Plan output</p>
+              <p className="mt-2 text-xl font-black text-white">JPEG map ready</p>
+              <div className="mt-4 grid grid-cols-3 gap-1">
+                {[1, 2, 3, 4, 5, 6].map(item => (
+                  <div key={item} className="h-9 rounded border border-cyan-200/20 bg-cyan-300/10" />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-4 grid grid-cols-4 gap-3">
+          {['BOQ', 'Cost', 'Map', 'AI'].map(item => (
+            <div key={item} className="rounded-lg border border-white/10 bg-slate-950 p-3 text-center text-xs font-bold text-slate-300">
+              {item}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
