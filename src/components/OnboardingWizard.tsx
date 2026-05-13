@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FaRobot, FaChartLine, FaFileUpload, FaShieldAlt,
-  FaBolt, FaCheckCircle, FaArrowRight, FaArrowLeft, FaTimes
+  FaBolt, FaCheckCircle, FaArrowRight, FaArrowLeft, FaTimes, FaCalculator
 } from 'react-icons/fa';
 
 const steps = [
@@ -157,6 +157,104 @@ const steps = [
   },
   {
     id: 5,
+    icon: FaRobot,
+    color: 'from-violet-500 to-cyan-500',
+    glow: '#8b5cf6',
+    badge: 'AI Assistant',
+    title: 'Ask Your Construction\nQuestions Instantly',
+    desc: 'Use the AI Chatbot to ask about BOQ risks, contractor rates, planning decisions, vendor comparison, cost leakage, and practical next steps without digging through documents manually.',
+    visual: (
+      <div className="flex flex-col items-center justify-center h-full gap-3 w-full max-w-xs">
+        <motion.div
+          animate={{ y: [-4, 4, -4] }}
+          transition={{ duration: 2.5, repeat: Infinity }}
+          className="w-full rounded-2xl border border-violet-400/25 bg-violet-500/10 p-4"
+        >
+          <div className="mb-3 flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-400/15 text-violet-200">
+              <FaRobot />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-white">Auto Nirman AI</p>
+              <p className="text-[10px] text-violet-200/70">Construction advisor</p>
+            </div>
+          </div>
+          {[
+            { role: 'You', text: 'Why is steel rate high?' },
+            { role: 'AI', text: 'Flagged: 18% above benchmark.' },
+            { role: 'AI', text: 'Ask vendor for rate justification.' },
+          ].map((msg, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.18 + 0.25 }}
+              className={`mb-2 rounded-xl px-3 py-2 text-xs ${
+                msg.role === 'You'
+                  ? 'ml-8 bg-white/10 text-slate-200'
+                  : 'mr-6 bg-cyan-400/10 text-cyan-100 border border-cyan-300/15'
+              }`}
+            >
+              <span className="font-semibold">{msg.role}: </span>{msg.text}
+            </motion.div>
+          ))}
+        </motion.div>
+      </div>
+    ),
+  },
+  {
+    id: 6,
+    icon: FaCalculator,
+    color: 'from-emerald-500 to-cyan-500',
+    glow: '#10b981',
+    badge: 'Cost Estimator',
+    title: 'Estimate Project Cost\nBefore Site Decisions',
+    desc: 'Enter plot area, built-up area, city tier, quality level, floors, and add-ons. Auto Nirman creates a construction estimate with low-high range, cost per sq ft, timeline, and trade-wise cost split.',
+    visual: (
+      <div className="flex flex-col items-center justify-center h-full gap-3 w-full max-w-xs">
+        <motion.div
+          animate={{ scale: [1, 1.03, 1] }}
+          transition={{ duration: 2.4, repeat: Infinity }}
+          className="w-full rounded-2xl border border-emerald-400/25 bg-emerald-500/10 p-4"
+        >
+          <div className="flex items-center justify-between border-b border-white/10 pb-3">
+            <span className="text-xs font-semibold text-slate-300">Estimate</span>
+            <span className="rounded-full bg-emerald-400/15 px-2 py-0.5 text-[10px] font-bold text-emerald-200">Ready</span>
+          </div>
+          <p className="mt-4 text-3xl font-black text-white">Rs 28.4L</p>
+          <p className="mt-1 text-xs text-slate-400">Rs 3,155 / sq ft</p>
+          <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+            {[
+              { label: 'Low', value: '25.2L' },
+              { label: 'Time', value: '6 mo' },
+              { label: 'High', value: '31.6L' },
+            ].map((item, i) => (
+              <motion.div
+                key={item.label}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.15 + 0.3 }}
+                className="rounded-xl border border-white/10 bg-white/5 px-2 py-2"
+              >
+                <p className="text-xs font-bold text-white">{item.value}</p>
+                <p className="mt-1 text-[10px] text-slate-500">{item.label}</p>
+              </motion.div>
+            ))}
+          </div>
+          <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: '72%' }}
+              transition={{ duration: 0.9, delay: 0.35 }}
+              className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400"
+            />
+          </div>
+        </motion.div>
+      </div>
+    ),
+  },
+  {
+    id: 7,
     icon: FaShieldAlt,
     color: 'from-amber-500 to-orange-500',
     glow: '#f59e0b',
@@ -174,10 +272,10 @@ const steps = [
         </motion.div>
         <div className="grid grid-cols-2 gap-2 w-full max-w-xs">
           {[
-            '✅ BOQ Analysis ready',
-            '✅ AI engine active',
-            '✅ Benchmarks loaded',
-            '✅ Reports enabled',
+            'BOQ Analysis ready',
+            'AI Chatbot active',
+            'Cost Estimator live',
+            'Reports enabled',
           ].map((item, i) => (
             <motion.div
               key={i}
@@ -186,6 +284,7 @@ const steps = [
               transition={{ delay: i * 0.15 + 0.3 }}
               className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-slate-300"
             >
+              <FaCheckCircle className="mr-2 inline text-emerald-300" size={11} />
               {item}
             </motion.div>
           ))}
@@ -401,3 +500,6 @@ export default function OnboardingWizard({ onComplete }: { onComplete: () => voi
     </motion.div>
   );
 }
+
+
+

@@ -184,12 +184,19 @@ export default function Home() {
         </motion.div>
 
         <motion.div
-          animate={{ y: [0, 8, 0] }}
-          transition={{ repeat: Infinity, duration: 2 }}
-          className="absolute bottom-10 left-1/2 -translate-x-1/2 text-slate-600 text-sm flex flex-col items-center gap-1"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.75 }}
+          className="mt-12 hidden flex-col items-center sm:flex"
+          aria-hidden="true"
         >
-          <span>Scroll to explore</span>
-          <span className="text-xl">↓</span>
+          <div className="relative h-9 w-5 rounded-full border border-cyan-200/20 bg-white/[0.025] shadow-[0_0_18px_rgba(56,189,248,0.08)]">
+            <motion.span
+              animate={{ y: [5, 16, 5], opacity: [0.28, 0.85, 0.28] }}
+              transition={{ repeat: Infinity, duration: 1.8, ease: 'easeInOut' }}
+              className="absolute left-1/2 top-0 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-cyan-200/65"
+            />
+          </div>
         </motion.div>
       </section>
 
@@ -456,3 +463,4 @@ export default function Home() {
     </main>
   );
 }
+
