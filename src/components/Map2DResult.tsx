@@ -10,6 +10,7 @@ import type { Map2DLayout } from '@/types/map2d';
 export default function Map2DResult() {
   const [layout, setLayout] = useState<Map2DLayout | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [canvasReady, setCanvasReady] = useState(false);
 
   useEffect(() => {
     const raw = sessionStorage.getItem(MAP2D_STORAGE_KEY);
@@ -21,10 +22,29 @@ export default function Map2DResult() {
       }
     }
     setLoaded(true);
+    const timer = window.setTimeout(() => setCanvasReady(true), 900);
+    return () => window.clearTimeout(timer);
   }, []);
 
-  if (!loaded) {
-    return <div className="mx-auto max-w-4xl px-4 py-16 text-slate-400">Loading generated map...</div>;
+  if (!loaded || !canvasReady) {
+    return (
+      <div className="mx-auto flex min-h-[70vh] max-w-4xl items-center justify-center px-4 py-16">
+        <div className="w-full max-w-md rounded-2xl border border-cyan-300/20 bg-slate-950/80 p-7 text-center shadow-[0_0_70px_rgba(34,211,238,0.14)]">
+          <div className="mx-auto mb-5 h-16 w-16 rounded-full border border-cyan-300/25 bg-cyan-300/10 p-2">
+            <div className="h-full w-full animate-spin rounded-full border-2 border-cyan-300/20 border-t-cyan-200" />
+          </div>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-100">Rendering result</p>
+          <h1 className="mt-3 text-2xl font-bold text-white">Preparing your clean JPEG map</h1>
+          <div className="mt-5 grid gap-2 text-left">
+            {['Optimizing labels', 'Drawing room boundaries', 'Loading AI assistant checks'].map(item => (
+              <div key={item} className="rounded-lg border border-white/10 bg-white/[0.035] px-4 py-3 text-sm text-slate-300">
+                {item}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (!layout) {
@@ -65,6 +85,9 @@ export default function Map2DResult() {
 
         <aside className="rounded-lg border border-white/10 bg-slate-950/75 p-5 shadow-2xl shadow-black/40">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">AI assistant checks</p>
+          <p className="mt-2 text-sm leading-6 text-slate-400">
+            Clean geometry, readable labels, and design checks separated from the JPEG so the map stays crisp.
+          </p>
           <div className="mt-5 space-y-3">
             {Object.entries(layout.score).map(([key, value]) => (
               <div key={key} className="rounded-lg border border-white/10 bg-white/[0.035] p-3">

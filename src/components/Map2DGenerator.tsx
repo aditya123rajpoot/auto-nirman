@@ -46,9 +46,11 @@ export default function Map2DGenerator() {
   const [staircase, setStaircase] = useState(true);
   const [city, setCity] = useState('Lucknow');
   const [error, setError] = useState<string | null>(null);
+  const [generating, setGenerating] = useState(false);
 
   const generate = () => {
     setError(null);
+    setGenerating(true);
     const input: Map2DInput = {
       plotLength,
       plotWidth,
@@ -63,14 +65,35 @@ export default function Map2DGenerator() {
     try {
       const layout = generateMap2DLayout(input);
       sessionStorage.setItem(MAP2D_STORAGE_KEY, JSON.stringify(layout));
-      router.push('/dashboard/2d-map-generator/result');
+      window.setTimeout(() => {
+        router.push('/dashboard/2d-map-generator/result');
+      }, 1250);
     } catch (err) {
+      setGenerating(false);
       setError(err instanceof Error ? err.message : 'Could not generate layout.');
     }
   };
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="relative mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+      {generating && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/80 px-4 backdrop-blur-md">
+          <div className="w-full max-w-md rounded-2xl border border-cyan-300/20 bg-slate-950/90 p-7 text-center shadow-[0_0_70px_rgba(34,211,238,0.18)]">
+            <div className="mx-auto mb-5 h-16 w-16 rounded-full border border-cyan-300/25 bg-cyan-300/10 p-2">
+              <div className="h-full w-full animate-spin rounded-full border-2 border-cyan-300/20 border-t-cyan-200" />
+            </div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-100">Generating map</p>
+            <h2 className="mt-3 text-2xl font-bold text-white">Building clean geometry</h2>
+            <div className="mt-5 space-y-2 text-left">
+              {['Validating plot dimensions', 'Placing rooms with deterministic coordinates', 'Preparing futuristic JPEG renderer'].map(item => (
+                <div key={item} className="rounded-lg border border-white/10 bg-white/[0.035] px-4 py-3 text-sm text-slate-300">
+                  {item}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
       <div className="mb-8 max-w-4xl">
         <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-cyan-100">
           <Sparkles size={14} /> AI assisted map generator
@@ -172,9 +195,10 @@ export default function Map2DGenerator() {
           <button
             type="button"
             onClick={generate}
+            disabled={generating}
             className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-cyan-300 px-5 py-3.5 text-sm font-bold text-slate-950 transition-colors hover:bg-cyan-200"
           >
-            Generate futuristic JPEG map <ArrowRight size={18} />
+            {generating ? 'Generating clean JPEG map...' : 'Generate futuristic JPEG map'} <ArrowRight size={18} />
           </button>
         </div>
       </div>

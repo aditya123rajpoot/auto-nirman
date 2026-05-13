@@ -41,6 +41,28 @@ function drawGrid(ctx: CanvasRenderingContext2D) {
   ctx.restore();
 }
 
+function fitText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, startSize: number, minSize: number, weight = 800) {
+  let size = startSize;
+  do {
+    ctx.font = `${weight} ${size}px Arial`;
+    if (ctx.measureText(text).width <= maxWidth) return size;
+    size -= 1;
+  } while (size >= minSize);
+  return minSize;
+}
+
+function compactLabel(label: string) {
+  return label
+    .replace('Covered Parking', 'Parking')
+    .replace('Living Lounge', 'Living')
+    .replace('Dining Core', 'Dining')
+    .replace('Kitchen SE Zone', 'Kitchen')
+    .replace('Master Bedroom', 'Master')
+    .replace('Bedroom 2', 'Bed 2')
+    .replace('Bedroom 3', 'Bed 3')
+    .replace('Bath / WC', 'Bath');
+}
+
 export default function Map2DCanvas({ layout }: Map2DCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -114,15 +136,25 @@ export default function Map2DCanvas({ layout }: Map2DCanvasProps) {
       ctx.stroke();
       ctx.restore();
 
+      const label = compactLabel(room.label);
+      const maxTextWidth = Math.max(20, width - 18);
+      const labelSize = fitText(ctx, label, maxTextWidth, height < 72 ? 18 : 24, 11);
+      const canShowDimensions = width > 88 && height > 58;
+      const centerY = y + height / 2;
+
       ctx.fillStyle = '#e5f7ff';
-      ctx.font = '700 24px Arial';
+      ctx.font = `800 ${labelSize}px Arial`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(room.label, x + width / 2, y + height / 2 - 11);
+      ctx.fillText(label, x + width / 2, centerY - (canShowDimensions ? 10 : 0));
 
-      ctx.fillStyle = 'rgba(226, 232, 240, 0.7)';
-      ctx.font = '500 16px Arial';
-      ctx.fillText(`${room.width.toFixed(1)}' x ${room.height.toFixed(1)}'`, x + width / 2, y + height / 2 + 17);
+      if (canShowDimensions) {
+        const dimension = `${room.width.toFixed(1)}' x ${room.height.toFixed(1)}'`;
+        const dimSize = fitText(ctx, dimension, maxTextWidth, 15, 10, 600);
+        ctx.fillStyle = 'rgba(226, 232, 240, 0.72)';
+        ctx.font = `600 ${dimSize}px Arial`;
+        ctx.fillText(dimension, x + width / 2, centerY + 17);
+      }
     });
 
     layout.doors.forEach(door => {
@@ -186,7 +218,7 @@ export default function Map2DCanvas({ layout }: Map2DCanvasProps) {
     ctx.fillText(`${layout.input.roadSide.toUpperCase()} ROAD SIDE`, 1220, 245);
 
     const panelX = 1190;
-    const panelY = 310;
+    const panelY = 330;
     ctx.fillStyle = 'rgba(15, 23, 42, 0.72)';
     ctx.strokeStyle = 'rgba(125, 211, 252, 0.22)';
     ctx.lineWidth = 2;
@@ -223,23 +255,23 @@ export default function Map2DCanvas({ layout }: Map2DCanvasProps) {
       ctx.fillText(`${value}%`, panelX + 275, y);
     });
 
-    ctx.font = '500 14px Arial';
-    ctx.fillStyle = 'rgba(226, 232, 240, 0.76)';
-    layout.aiNotes.slice(0, 4).forEach((note, index) => {
-      const words = note.split(' ');
-      let line = '';
-      let y = panelY + 350 + index * 38;
-      words.forEach(word => {
-        const test = `${line}${word} `;
-        if (ctx.measureText(test).width > 270) {
-          ctx.fillText(line, panelX + 28, y);
-          line = `${word} `;
-          y += 17;
-        } else {
-          line = test;
-        }
-      });
-      ctx.fillText(line, panelX + 28, y);
+    const assistantBadges = [
+      'Geometry locked',
+      'Room labels cleaned',
+      'JPEG export ready',
+      layout.input.vastu ? 'Vastu assist on' : 'Efficiency priority',
+    ];
+
+    assistantBadges.forEach((badge, index) => {
+      const y = panelY + 330 + index * 34;
+      ctx.fillStyle = 'rgba(34, 211, 238, 0.12)';
+      ctx.strokeStyle = 'rgba(34, 211, 238, 0.24)';
+      drawRoundedRect(ctx, panelX + 28, y - 19, 274, 24, 12);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#dff9ff';
+      ctx.font = '700 14px Arial';
+      ctx.fillText(badge, panelX + 44, y - 3);
     });
 
     ctx.strokeStyle = 'rgba(226, 232, 240, 0.5)';
@@ -284,3 +316,5 @@ export default function Map2DCanvas({ layout }: Map2DCanvasProps) {
     </div>
   );
 }
+
+
