@@ -21,8 +21,9 @@ function FloatingInput({
 
   return (
     <div className="relative">
-      <div className={`absolute -inset-[1px] rounded-xl transition-all duration-500 ${focused ? 'bg-gradient-to-r from-cyan-500/40 via-blue-500/40 to-purple-500/40' : 'opacity-0'}`} />
-      <div className="relative rounded-xl overflow-hidden">
+      <div className={`absolute -inset-[1px] rounded-2xl transition-all duration-500 ${focused ? 'bg-gradient-to-r from-purple-300/70 via-blue-400/60 to-cyan-400/70 shadow-[0_0_28px_rgba(168,85,247,0.18)]' : 'bg-white/8'}`} />
+      <div className="group relative overflow-hidden rounded-2xl border border-white/10 bg-[#0b1728] shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_16px_36px_rgba(0,0,0,0.22)] transition-all duration-300 hover:border-purple-300/25 hover:bg-[#0d1f35]">
+        <div className={`pointer-events-none absolute inset-0 transition-opacity duration-500 ${focused ? 'opacity-100' : 'opacity-0'} bg-[radial-gradient(circle_at_12%_0%,rgba(168,85,247,0.15),transparent_36%)]`} />
         <input
           id={id}
           type={type}
@@ -32,16 +33,16 @@ function FloatingInput({
           onBlur={() => setFocused(false)}
           placeholder=" "
           autoComplete="off"
-          className="peer w-full px-4 pt-7 pb-3 bg-[#0d1f35] text-white text-sm outline-none transition-all duration-300 [color-scheme:dark]"
+          className="peer relative z-10 w-full bg-transparent px-4 pb-3.5 pt-7 text-sm font-semibold text-white outline-none transition-all duration-300 [color-scheme:dark]"
           style={{
-            WebkitBoxShadow: '0 0 0 1000px #0d1f35 inset',
+            WebkitBoxShadow: '0 0 0 1000px #0b1728 inset',
             WebkitTextFillColor: 'white',
             caretColor: '#22d3ee',
           }}
         />
         <label
           htmlFor={id}
-          className={`absolute left-4 transition-all duration-300 pointer-events-none font-medium ${
+          className={`absolute left-4 z-20 transition-all duration-300 pointer-events-none font-medium ${
             isFloated
               ? 'top-2.5 text-[10px] text-cyan-400 tracking-widest uppercase'
               : 'top-1/2 -translate-y-1/2 text-sm text-slate-500'
@@ -49,7 +50,7 @@ function FloatingInput({
         >
           {label}
         </label>
-        <div className={`absolute bottom-0 left-0 right-0 h-[1px] transition-all duration-500 ${focused ? 'bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400' : 'bg-white/10'}`} />
+        <div className={`absolute bottom-0 left-0 right-0 h-[2px] transition-all duration-500 ${focused ? 'bg-gradient-to-r from-purple-300 via-blue-400 to-cyan-400' : 'bg-white/10'}`} />
         {rightElement && (
           <div className="absolute right-3 top-1/2 -translate-y-1/2 z-10">{rightElement}</div>
         )}
@@ -190,7 +191,7 @@ export default function SignupPage() {
       </div>
 
       {/* ══ RIGHT PANEL — Form ══ */}
-      <div className="w-full lg:w-[45%] flex items-center justify-center px-4 pb-10 pt-24 sm:px-6 lg:min-h-screen lg:py-12 relative">
+      <div className="w-full lg:w-[45%] flex items-center justify-center px-4 pb-8 pt-20 sm:px-6 lg:min-h-screen lg:py-12 relative">
         <div className="absolute inset-0 bg-[#020817]" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_#7c3aed15_0%,_transparent_50%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_#0ea5e910_0%,_transparent_50%)]" />
@@ -204,30 +205,32 @@ export default function SignupPage() {
           className="relative z-10 w-full max-w-sm"
         >
           {/* Mobile logo */}
-          <div className="lg:hidden flex items-center gap-3 mb-5">
-            <Image src="/logo.png" alt="Auto Nirman" width={36} height={36} className="drop-shadow-[0_0_10px_#38bdf8]" />
-            <span className="text-lg font-bold text-white">Auto Nirman</span>
+          <div className="lg:hidden flex items-center justify-between gap-3 mb-4">
+            <div className="flex items-center gap-3">
+              <Image src="/logo.png" alt="Auto Nirman" width={36} height={36} className="drop-shadow-[0_0_10px_#38bdf8]" />
+              <span className="text-lg font-bold text-white">Auto Nirman</span>
+            </div>
+            <span className="rounded-full border border-purple-300/20 bg-purple-300/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-purple-100">Free</span>
           </div>
 
           {/* Mobile tagline */}
-          <div className="lg:hidden mb-6 p-4 bg-purple-500/5 border border-purple-500/10 rounded-2xl">
-            <p className="text-purple-400 text-xs font-semibold uppercase tracking-wider mb-1">Join 500+ Developers</p>
-            <p className="text-white font-bold text-base leading-snug sm:text-lg">Start saving crores on every project.</p>
+          <div className="lg:hidden mb-5 rounded-xl border border-purple-500/10 bg-purple-500/5 px-3 py-2.5">
+            <p className="text-xs font-semibold leading-5 text-slate-300">Create your workspace for BOQ checks, estimates, maps, and AI help.</p>
           </div>
 
           {/* Header */}
-          <div className="mb-6 sm:mb-8">
+          <div className="mb-5 sm:mb-8">
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
-              className="inline-flex items-center gap-2 bg-purple-500/10 border border-purple-500/20 rounded-full px-3 py-1 mb-4">
+              className="hidden items-center gap-2 bg-purple-500/10 border border-purple-500/20 rounded-full px-3 py-1 mb-4 lg:inline-flex">
               <span className="w-1.5 h-1.5 bg-purple-400 rounded-full animate-pulse" />
               <span className="text-purple-400 text-xs font-semibold tracking-wider uppercase">Create Account</span>
             </motion.div>
-            <h2 className="text-3xl font-black text-white mb-2 tracking-tight sm:text-4xl lg:text-3xl">Get started free</h2>
-            <p className="text-slate-500 text-sm">No credit card required · Setup in 2 minutes</p>
+            <h2 className="text-3xl font-black text-white mb-1 tracking-tight sm:text-4xl lg:text-3xl">Get started free</h2>
+            <p className="text-slate-500 text-sm">No credit card required. Setup in 2 minutes.</p>
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSignup} className="space-y-4">
+          <form onSubmit={handleSignup} className="space-y-3.5 sm:space-y-4">
             <FloatingInput id="name" type="text" label="Full Name" value={name} onChange={setName} />
             <FloatingInput id="email" type="email" label="Email address" value={email} onChange={setEmail} />
             <FloatingInput
@@ -260,9 +263,10 @@ export default function SignupPage() {
 
             <motion.button type="submit" disabled={loading || !name || !email || !password || !confirmPassword}
               whileHover={{ scale: loading ? 1 : 1.01 }} whileTap={{ scale: loading ? 1 : 0.99 }}
-              className="relative w-full py-4 rounded-xl font-bold text-sm overflow-hidden disabled:opacity-40 disabled:cursor-not-allowed group mt-2">
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-500 via-blue-500 to-cyan-500 group-hover:from-purple-400 group-hover:to-cyan-400 transition-all duration-300" />
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-[radial-gradient(ellipse_at_50%_120%,_rgba(168,85,247,0.5),_transparent_70%)]" />
+              className="relative w-full overflow-hidden rounded-2xl py-3.5 text-sm font-black uppercase tracking-[0.08em] shadow-[0_18px_46px_rgba(124,58,237,0.26)] transition-all disabled:cursor-not-allowed disabled:opacity-40 sm:py-4 group mt-2">
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-400 via-blue-500 to-cyan-400 transition-all duration-300 group-hover:from-fuchsia-300 group-hover:via-sky-400 group-hover:to-cyan-300" />
+              <div className="absolute inset-0 bg-[linear-gradient(110deg,transparent_0%,rgba(255,255,255,0.32)_45%,transparent_60%)] -translate-x-full transition-transform duration-700 group-hover:translate-x-full" />
+              <div className="absolute inset-0 opacity-70 bg-[radial-gradient(ellipse_at_50%_120%,_rgba(168,85,247,0.5),_transparent_70%)]" />
               <span className="relative z-10 flex items-center justify-center gap-2 text-white tracking-wide">
                 {loading ? (
                   <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Creating account...</>
@@ -273,12 +277,12 @@ export default function SignupPage() {
             </motion.button>
           </form>
 
-          <p className="text-center text-xs text-slate-600 mt-5">
+          <p className="text-center text-xs text-slate-600 mt-4">
             Already have an account?{' '}
             <Link href="/login" className="text-cyan-400 hover:text-cyan-300 font-semibold transition-colors">Sign in</Link>
           </p>
 
-          <div className="flex items-center gap-3 my-6">
+          <div className="flex items-center gap-3 my-4 sm:my-6">
             <div className="flex-1 h-px bg-white/5" />
             <span className="text-slate-700 text-xs font-medium tracking-wider uppercase">or</span>
             <div className="flex-1 h-px bg-white/5" />
@@ -286,14 +290,14 @@ export default function SignupPage() {
 
           <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
             onClick={handleGoogleSignup} disabled={googleLoading}
-            className="w-full py-3.5 rounded-xl border border-white/8 bg-white/4 hover:bg-white/8 hover:border-purple-400/30 text-white text-sm font-semibold flex items-center justify-center gap-3 transition-all duration-300 disabled:opacity-50">
+            className="w-full py-3 rounded-xl border border-white/8 bg-white/4 hover:bg-white/8 hover:border-purple-400/30 text-white text-sm font-semibold flex items-center justify-center gap-3 transition-all duration-300 disabled:opacity-50 sm:py-3.5">
             {googleLoading
               ? <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
               : <Image src="/google-icon.png" alt="Google" width={18} height={18} />}
             <span>{googleLoading ? 'Redirecting...' : 'Sign up with Google'}</span>
           </motion.button>
 
-          <div className="flex items-center justify-center gap-6 mt-8 pt-6 border-t border-white/5">
+          <div className="hidden items-center justify-center gap-6 mt-8 pt-6 border-t border-white/5 sm:flex">
             {[{ icon: FaShieldAlt, text: 'SOC 2 Type II' }, { icon: FaBolt, text: '99.9% Uptime' }].map((badge, i) => (
               <div key={i} className="flex items-center gap-1.5 text-slate-700 text-xs">
                 <badge.icon size={10} /><span>{badge.text}</span>
@@ -301,7 +305,7 @@ export default function SignupPage() {
             ))}
           </div>
 
-          <p className="text-center text-xs text-slate-800 mt-3">
+          <p className="hidden text-center text-xs text-slate-800 mt-3 sm:block">
             By creating an account, you agree to our{' '}
             <Link href="/terms" className="text-slate-600 hover:text-slate-400 transition-colors">Terms</Link>
             {' '}and{' '}
