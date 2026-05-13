@@ -140,7 +140,7 @@ export default function LoginPage() {
   if (!mounted) return null;
 
   return (
-    <div className="relative min-h-screen flex flex-col lg:flex-row bg-[#020817] overflow-hidden">
+    <div className="relative min-h-screen flex flex-col lg:flex-row bg-[#020817] overflow-x-hidden">
 
       {/* ══ LEFT PANEL — Branding (hidden on mobile) ══ */}
       <div className="hidden lg:flex lg:w-[55%] relative flex-col justify-between p-12 overflow-hidden">
@@ -223,7 +223,7 @@ export default function LoginPage() {
       </div>
 
       {/* ══ RIGHT PANEL — Form ══ */}
-      <div className="w-full lg:w-[45%] flex items-center justify-center px-6 py-12 relative min-h-screen">
+      <div className="w-full lg:w-[45%] flex items-center justify-center px-4 pb-10 pt-24 sm:px-6 lg:min-h-screen lg:py-12 relative">
         <div className="absolute inset-0 bg-[#020817]" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_#0ea5e915_0%,_transparent_50%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_#7c3aed10_0%,_transparent_50%)]" />
@@ -237,25 +237,25 @@ export default function LoginPage() {
           className="relative z-10 w-full max-w-sm"
         >
           {/* Mobile logo */}
-          <div className="lg:hidden flex items-center gap-3 mb-8">
+          <div className="lg:hidden flex items-center gap-3 mb-5">
             <Image src="/logo.png" alt="Auto Nirman" width={36} height={36} className="drop-shadow-[0_0_10px_#38bdf8]" />
             <span className="text-lg font-bold text-white">Auto Nirman</span>
           </div>
 
           {/* Mobile tagline */}
-          <div className="lg:hidden mb-8 p-4 bg-cyan-500/5 border border-cyan-500/10 rounded-2xl">
+          <div className="lg:hidden mb-6 p-4 bg-cyan-500/5 border border-cyan-500/10 rounded-2xl">
             <p className="text-cyan-400 text-xs font-semibold uppercase tracking-wider mb-1">AI Infrastructure Intelligence</p>
-            <p className="text-white font-bold text-lg leading-snug">Eliminate ₹1 Crore before it disappears.</p>
+            <p className="text-white font-bold text-base leading-snug sm:text-lg">Eliminate ₹1 Crore before it disappears.</p>
           </div>
 
           {/* Header */}
-          <div className="mb-8">
+          <div className="mb-6 sm:mb-8">
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
               className="inline-flex items-center gap-2 bg-cyan-500/10 border border-cyan-500/20 rounded-full px-3 py-1 mb-4">
               <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse" />
               <span className="text-cyan-400 text-xs font-semibold tracking-wider uppercase">Secure Login</span>
             </motion.div>
-            <h2 className="text-3xl font-black text-white mb-2 tracking-tight">Welcome back</h2>
+            <h2 className="text-3xl font-black text-white mb-2 tracking-tight sm:text-4xl lg:text-3xl">Welcome back</h2>
             <p className="text-slate-500 text-sm">Sign in to your intelligence dashboard</p>
           </div>
 

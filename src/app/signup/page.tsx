@@ -109,7 +109,7 @@ export default function SignupPage() {
   if (!mounted) return null;
 
   return (
-    <div className="relative min-h-screen flex flex-col lg:flex-row bg-[#020817] overflow-hidden">
+    <div className="relative min-h-screen flex flex-col lg:flex-row bg-[#020817] overflow-x-hidden">
 
       {/* ══ LEFT PANEL ══ */}
       <div className="hidden lg:flex lg:w-[55%] relative flex-col justify-between p-12 overflow-hidden">
@@ -190,7 +190,7 @@ export default function SignupPage() {
       </div>
 
       {/* ══ RIGHT PANEL — Form ══ */}
-      <div className="w-full lg:w-[45%] flex items-center justify-center px-6 py-12 relative min-h-screen">
+      <div className="w-full lg:w-[45%] flex items-center justify-center px-4 pb-10 pt-24 sm:px-6 lg:min-h-screen lg:py-12 relative">
         <div className="absolute inset-0 bg-[#020817]" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_#7c3aed15_0%,_transparent_50%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_#0ea5e910_0%,_transparent_50%)]" />
@@ -204,25 +204,25 @@ export default function SignupPage() {
           className="relative z-10 w-full max-w-sm"
         >
           {/* Mobile logo */}
-          <div className="lg:hidden flex items-center gap-3 mb-8">
+          <div className="lg:hidden flex items-center gap-3 mb-5">
             <Image src="/logo.png" alt="Auto Nirman" width={36} height={36} className="drop-shadow-[0_0_10px_#38bdf8]" />
             <span className="text-lg font-bold text-white">Auto Nirman</span>
           </div>
 
           {/* Mobile tagline */}
-          <div className="lg:hidden mb-8 p-4 bg-purple-500/5 border border-purple-500/10 rounded-2xl">
+          <div className="lg:hidden mb-6 p-4 bg-purple-500/5 border border-purple-500/10 rounded-2xl">
             <p className="text-purple-400 text-xs font-semibold uppercase tracking-wider mb-1">Join 500+ Developers</p>
-            <p className="text-white font-bold text-lg leading-snug">Start saving crores on every project.</p>
+            <p className="text-white font-bold text-base leading-snug sm:text-lg">Start saving crores on every project.</p>
           </div>
 
           {/* Header */}
-          <div className="mb-8">
+          <div className="mb-6 sm:mb-8">
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
               className="inline-flex items-center gap-2 bg-purple-500/10 border border-purple-500/20 rounded-full px-3 py-1 mb-4">
               <span className="w-1.5 h-1.5 bg-purple-400 rounded-full animate-pulse" />
               <span className="text-purple-400 text-xs font-semibold tracking-wider uppercase">Create Account</span>
             </motion.div>
-            <h2 className="text-3xl font-black text-white mb-2 tracking-tight">Get started free</h2>
+            <h2 className="text-3xl font-black text-white mb-2 tracking-tight sm:text-4xl lg:text-3xl">Get started free</h2>
             <p className="text-slate-500 text-sm">No credit card required · Setup in 2 minutes</p>
           </div>
 

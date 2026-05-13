@@ -157,7 +157,7 @@ export default function ChatWindow() {
   const isEmpty = messages.length === 0;
 
   return (
-    <div className="relative w-full min-h-screen bg-[#050810] overflow-hidden flex flex-col items-center justify-center">
+    <div className="relative w-full min-h-[100dvh] bg-[#050810] overflow-hidden flex flex-col items-center justify-center">
 
       {/* Deep space background */}
       <div className="absolute inset-0 z-0">
@@ -197,7 +197,7 @@ export default function ChatWindow() {
       </div>
 
       {/* Header bar */}
-      <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-6 py-4 border-b border-white/5">
+      <div className="absolute top-0 left-0 right-0 z-20 hidden items-center justify-between px-6 py-4 border-b border-white/5 sm:flex">
         <div className="flex items-center gap-3">
           <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_#22d3ee]" />
           <span className="text-xs font-mono tracking-[0.2em] text-cyan-400/70 uppercase">Auto Nirman AI</span>
@@ -213,8 +213,7 @@ export default function ChatWindow() {
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        className="relative z-10 w-full max-w-2xl mx-auto px-4 flex flex-col"
-        style={{ height: "100vh", paddingTop: "72px", paddingBottom: "24px" }}
+        className="relative z-10 mx-auto flex h-[100dvh] w-full max-w-2xl flex-col px-3 pb-4 pt-24 sm:px-4 sm:pb-6 sm:pt-[72px]"
       >
 
         {/* Empty state */}
@@ -228,11 +227,11 @@ export default function ChatWindow() {
               className="flex-1 flex flex-col items-center justify-center text-center"
             >
               {/* Bot avatar */}
-              <div className="relative mb-8">
+              <div className="relative mb-5 sm:mb-8">
                 <div className="absolute inset-0 rounded-full bg-cyan-400/10 blur-2xl scale-150 animate-pulse" />
-                <div className="relative w-28 h-28 rounded-full border border-cyan-400/20 bg-gradient-to-br from-blue-900/40 to-cyan-900/20 flex items-center justify-center backdrop-blur-xl shadow-[0_0_40px_#0ea5e920,inset_0_1px_0_#ffffff15]">
+                <div className="relative flex h-24 w-24 items-center justify-center rounded-full border border-cyan-400/20 bg-gradient-to-br from-blue-900/40 to-cyan-900/20 shadow-[0_0_40px_#0ea5e920,inset_0_1px_0_#ffffff15] backdrop-blur-xl sm:h-28 sm:w-28">
                   {botAnimation ? (
-                    <Lottie animationData={botAnimation} loop autoplay className="w-20 h-20" />
+                    <Lottie animationData={botAnimation} loop autoplay className="h-16 w-16 sm:h-20 sm:w-20" />
                   ) : (
                     <Zap className="text-cyan-400" size={40} />
                   )}
@@ -247,7 +246,7 @@ export default function ChatWindow() {
               <h1 className="text-2xl font-bold text-white mb-2 tracking-tight">
                 Construction AI Buddy
               </h1>
-              <p className="text-sm text-white/40 mb-10 max-w-xs leading-relaxed font-light">
+              <p className="text-sm text-white/40 mb-6 max-w-xs leading-relaxed font-light sm:mb-10">
                 Ask me anything about BOQ analysis, cost benchmarks, vendor rates, or project planning.
               </p>
 
@@ -260,11 +259,11 @@ export default function ChatWindow() {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.2 + i * 0.1 }}
                     onClick={() => sendMessage(s.label)}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-white/[0.03] border border-white/[0.07] hover:border-cyan-400/30 hover:bg-cyan-400/[0.04] transition-all duration-200 group text-left"
+                    className="w-full flex items-center gap-3 rounded-xl border border-white/[0.07] bg-white/[0.03] px-3 py-3 text-left transition-all duration-200 hover:border-cyan-400/30 hover:bg-cyan-400/[0.04] group sm:px-4"
                   >
                     <s.icon size={15} className="text-cyan-400/60 group-hover:text-cyan-400 transition-colors shrink-0" />
                     <span className="text-sm text-white/50 group-hover:text-white/80 transition-colors">{s.label}</span>
-                    <span className="ml-auto text-white/20 group-hover:text-cyan-400/60 transition-colors text-xs">Enter</span>
+                    <span className="ml-auto hidden text-xs text-white/20 transition-colors group-hover:text-cyan-400/60 sm:inline">Enter</span>
                   </motion.button>
                 ))}
               </div>
@@ -353,13 +352,13 @@ export default function ChatWindow() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.5 }}
-          className={`relative mt-4 rounded-2xl transition-all duration-300 ${
+          className={`relative mt-3 rounded-2xl transition-all duration-300 sm:mt-4 ${
             focused
               ? "shadow-[0_0_0_1px_#22d3ee30,0_8px_40px_#0ea5e915]"
               : "shadow-[0_0_0_1px_#ffffff10,0_4px_20px_#00000040]"
           }`}
         >
-          <div className="flex items-center gap-2 bg-white/[0.04] backdrop-blur-xl rounded-2xl border border-white/[0.08] px-4 py-3">
+          <div className="flex items-center gap-2 rounded-2xl border border-white/[0.08] bg-white/[0.04] px-3 py-2.5 backdrop-blur-xl sm:px-4 sm:py-3">
             <input
               ref={inputRef}
               value={input}
@@ -368,7 +367,7 @@ export default function ChatWindow() {
               onFocus={() => setFocused(true)}
               onBlur={() => setFocused(false)}
               placeholder="Ask me about your project..."
-              className="flex-1 bg-transparent text-white placeholder-white/25 outline-none text-sm caret-cyan-400"
+              className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none caret-cyan-400 placeholder-white/25"
             />
 
             <div className="flex items-center gap-1.5">
@@ -377,7 +376,7 @@ export default function ChatWindow() {
               <button
                 onClick={() => sendMessage()}
                 disabled={!input.trim()}
-                className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 text-white flex items-center justify-center transition-all duration-200 hover:scale-105 hover:shadow-[0_0_20px_#38bdf860] disabled:opacity-30 disabled:hover:scale-100 disabled:hover:shadow-none active:scale-95"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 text-white transition-all duration-200 hover:scale-105 hover:shadow-[0_0_20px_#38bdf860] active:scale-95 disabled:opacity-30 disabled:hover:scale-100 disabled:hover:shadow-none"
               >
                 <SendHorizontal size={16} />
               </button>
