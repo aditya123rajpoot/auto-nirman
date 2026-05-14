@@ -93,6 +93,57 @@ input[type="number"] {
   animation: fadeIn 0.5s ease-in-out both;
 }
 
+.living-surface {
+  position: relative;
+  isolation: isolate;
+}
+
+.living-surface::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0;
+  background:
+    linear-gradient(110deg, transparent 8%, rgba(103, 232, 249, 0.12) 18%, transparent 28%),
+    radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(103, 232, 249, 0.16), transparent 28%);
+  transform: translateX(-18%);
+  transition: opacity 220ms ease, transform 520ms ease;
+}
+
+.living-surface:hover::before,
+.living-surface:focus-within::before {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.live-grid {
+  background-image:
+    linear-gradient(rgba(125, 211, 252, 0.11) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(125, 211, 252, 0.11) 1px, transparent 1px);
+  background-size: 30px 30px;
+  animation: liveGridDrift 18s linear infinite;
+}
+
+.signal-sweep {
+  position: relative;
+  overflow: hidden;
+}
+
+.signal-sweep::after {
+  content: "";
+  position: absolute;
+  inset: -40% auto -40% -30%;
+  width: 24%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.18), transparent);
+  transform: skewX(-18deg);
+  animation: signalSweep 3.8s ease-in-out infinite;
+}
+
+.pulse-dot {
+  animation: pulseDot 1.8s ease-in-out infinite;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -101,5 +152,39 @@ input[type="number"] {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes liveGridDrift {
+  from {
+    background-position: 0 0, 0 0;
+  }
+  to {
+    background-position: 30px 30px, 30px 30px;
+  }
+}
+
+@keyframes signalSweep {
+  0%,
+  42% {
+    transform: translateX(0) skewX(-18deg);
+    opacity: 0;
+  }
+  52% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(620%) skewX(-18deg);
+    opacity: 0;
+  }
+}
+
+@keyframes pulseDot {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(103, 232, 249, 0.42);
+  }
+  50% {
+    box-shadow: 0 0 0 7px rgba(103, 232, 249, 0);
   }
 }

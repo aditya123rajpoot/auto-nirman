@@ -51,7 +51,7 @@ function NumberField({ label, value, onChange, helper }: {
   helper: string;
 }) {
   return (
-    <label className="rounded-lg border border-white/10 bg-slate-950/70 p-4 focus-within:border-cyan-300/60">
+    <label className="living-surface rounded-lg border border-white/10 bg-slate-950/70 p-4 transition-all focus-within:-translate-y-0.5 focus-within:border-cyan-300/60">
       <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
         <Ruler size={15} className="text-cyan-200" /> {label}
       </span>
@@ -64,6 +64,89 @@ function NumberField({ label, value, onChange, helper }: {
       />
       <span className="mt-2 block text-xs text-slate-500">{helper}</span>
     </label>
+  );
+}
+
+function LivePlanningPreview({
+  plotMode,
+  plotLength,
+  plotWidth,
+  tracedArea,
+  houseType,
+  bathrooms,
+  planStyle,
+  vastu,
+  parking,
+  staircase,
+}: {
+  plotMode: Map2DPlotMode;
+  plotLength: number;
+  plotWidth: number;
+  tracedArea: number;
+  houseType: Map2DHouseType;
+  bathrooms: number;
+  planStyle: Map2DPlanStyle;
+  vastu: boolean;
+  parking: boolean;
+  staircase: boolean;
+}) {
+  const plotArea = plotMode === 'trace' ? tracedArea : plotLength * plotWidth;
+  const enabledSystems = [vastu, parking, staircase].filter(Boolean).length;
+  const planningScore = Math.min(98, Math.round(62 + enabledSystems * 8 + (planStyle === 'premium' ? 10 : planStyle === 'family' ? 7 : 4) + bathrooms * 2));
+
+  return (
+    <section className="living-surface mb-6 overflow-hidden rounded-lg border border-cyan-300/15 bg-slate-950/75 p-4 shadow-2xl shadow-cyan-950/20">
+      <div className="live-grid absolute inset-0 opacity-20" />
+      <div className="relative z-10 grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-center">
+        <div>
+          <div className="flex flex-wrap items-center gap-2">
+            {[
+              `${plotMode === 'trace' ? 'Traced' : 'Rectangle'} plot`,
+              houseType.toUpperCase(),
+              `${bathrooms} Bath`,
+              planStyle,
+            ].map(item => (
+              <span key={item} className="rounded-full border border-cyan-300/15 bg-cyan-300/10 px-3 py-1 text-[11px] font-black uppercase tracking-[0.12em] text-cyan-100">
+                {item}
+              </span>
+            ))}
+          </div>
+          <h2 className="mt-4 text-2xl font-black text-white">Live planning cockpit</h2>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
+            Every input updates this readiness view before generation, so users feel the plan forming instead of filling a static form.
+          </p>
+          <div className="mt-4 grid gap-2 sm:grid-cols-3">
+            {[
+              [Math.round(plotArea).toLocaleString('en-IN'), 'plot sq ft'],
+              [`${planningScore}%`, 'planning readiness'],
+              [`${enabledSystems}/3`, 'assist systems'],
+            ].map(([value, label]) => (
+              <div key={label} className="rounded-lg border border-white/10 bg-white/[0.035] p-3">
+                <p className="text-xl font-black text-white">{value}</p>
+                <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">{label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="rounded-lg border border-cyan-300/15 bg-black/20 p-3">
+          <svg viewBox="0 0 120 86" className="h-40 w-full">
+            <defs>
+              <linearGradient id="previewFill" x1="0" x2="1" y1="0" y2="1">
+                <stop stopColor="#22d3ee" stopOpacity="0.32" />
+                <stop offset="1" stopColor="#f59e0b" stopOpacity="0.18" />
+              </linearGradient>
+            </defs>
+            <rect width="120" height="86" rx="6" fill="rgba(2,6,23,0.72)" />
+            <path d="M18 13 L84 8 L105 31 L96 72 L29 77 L13 49 Z" fill="url(#previewFill)" stroke="#67e8f9" strokeWidth="1.4" />
+            <path d="M18 13 L84 8 L105 31 L96 72 L29 77 L13 49 Z" fill="none" stroke="rgba(255,255,255,0.28)" strokeWidth="0.45" />
+            <path d="M18 35 H104 M28 14 V76 M61 10 V74 M84 28 H101 M84 49 H99" stroke="rgba(255,255,255,0.38)" strokeWidth="0.8" />
+            <circle cx="24" cy="23" r="4" fill={parking ? '#34d399' : '#334155'} />
+            <circle cx="52" cy="23" r="4" fill={vastu ? '#fbbf24' : '#334155'} />
+            <circle cx="90" cy="62" r="4" fill={staircase ? '#a78bfa' : '#334155'} />
+          </svg>
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -280,6 +363,19 @@ export default function Map2DGenerator() {
         </p>
       </div>
 
+      <LivePlanningPreview
+        plotMode={plotMode}
+        plotLength={plotLength}
+        plotWidth={plotWidth}
+        tracedArea={tracedArea}
+        houseType={houseType}
+        bathrooms={bathrooms}
+        planStyle={planStyle}
+        vastu={vastu}
+        parking={parking}
+        staircase={staircase}
+      />
+
       <div className="rounded-lg border border-white/10 bg-slate-950/70 shadow-2xl shadow-black/40 backdrop-blur">
         <div className="grid gap-6 p-5 sm:p-6 lg:grid-cols-2">
           <section className="lg:col-span-2">
@@ -296,7 +392,7 @@ export default function Map2DGenerator() {
                   type="button"
                   onClick={() => setPlotMode(option.value)}
                   className={classNames(
-                    'rounded-lg border p-4 text-left transition-all',
+                    'living-surface rounded-lg border p-4 text-left transition-all',
                     glowClass('cyan', plotMode === option.value)
                   )}
                 >
@@ -399,7 +495,7 @@ export default function Map2DGenerator() {
                   type="button"
                   onClick={() => setRoadSide(side)}
                   className={classNames(
-                    'rounded-lg border p-3 text-left text-sm font-semibold uppercase tracking-[0.12em]',
+                  'living-surface rounded-lg border p-3 text-left text-sm font-semibold uppercase tracking-[0.12em]',
                     glowClass(side === 'north' || side === 'east' ? 'cyan' : 'amber', roadSide === side)
                   )}
                 >
@@ -420,7 +516,7 @@ export default function Map2DGenerator() {
                   type="button"
                   onClick={() => setHouseType(type)}
                   className={classNames(
-                    'rounded-lg border p-4 text-left text-lg font-bold uppercase',
+                    'living-surface rounded-lg border p-4 text-left text-lg font-bold uppercase',
                     glowClass('emerald', houseType === type)
                   )}
                 >
@@ -442,7 +538,7 @@ export default function Map2DGenerator() {
                     type="button"
                     onClick={() => setBathrooms(count)}
                     className={classNames(
-                      'rounded-lg border p-3 text-center text-lg font-bold',
+                      'living-surface rounded-lg border p-3 text-center text-lg font-bold',
                       glowClass('violet', bathrooms === count)
                     )}
                   >
@@ -467,7 +563,7 @@ export default function Map2DGenerator() {
                     type="button"
                     onClick={() => setPlanStyle(option.value)}
                     className={classNames(
-                      'rounded-lg border p-3 text-left transition-all',
+                      'living-surface rounded-lg border p-3 text-left transition-all',
                       glowClass(option.value === 'premium' ? 'violet' : option.value === 'compact' ? 'amber' : 'emerald', planStyle === option.value)
                     )}
                   >
@@ -513,7 +609,7 @@ export default function Map2DGenerator() {
                 type="button"
                 onClick={() => set(!value)}
                 className={classNames(
-                  'flex min-h-20 items-center gap-3 rounded-lg border p-4 text-left transition-all',
+                  'living-surface flex min-h-20 items-center gap-3 rounded-lg border p-4 text-left transition-all',
                   glowClass(label === 'Vastu assist' ? 'amber' : label === 'Parking bay' ? 'emerald' : 'violet', value)
                 )}
               >

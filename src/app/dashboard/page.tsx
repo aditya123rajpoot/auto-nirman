@@ -202,6 +202,7 @@ export default function Dashboard() {
   const router = useRouter();
   const [comingSoon, setComingSoon] = useState<string | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [activeFeature, setActiveFeature] = useState<DashboardFeature>(startTools[0]);
 
   useEffect(() => {
     const onboarded = localStorage.getItem('autonirman_onboarded');
@@ -264,7 +265,7 @@ export default function Dashboard() {
                     key={item.label}
                     type="button"
                     onClick={() => router.push(item.route)}
-                    className="group rounded-lg border border-white/10 bg-white/[0.045] p-4 text-left transition-all hover:-translate-y-1 hover:border-white/25 hover:bg-white/[0.07] hover:shadow-[0_0_32px_rgba(34,211,238,0.12)]"
+                    className="living-surface group rounded-lg border border-white/10 bg-white/[0.045] p-4 text-left transition-all hover:-translate-y-1 hover:border-white/25 hover:bg-white/[0.07] hover:shadow-[0_0_32px_rgba(34,211,238,0.12)]"
                   >
                     <div className={`mb-4 h-1.5 w-16 rounded-full bg-gradient-to-r ${item.tone}`} />
                     <div className="flex items-center justify-between gap-4">
@@ -277,32 +278,29 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <aside className="rounded-lg border border-white/10 bg-slate-950 p-5 shadow-[0_24px_90px_rgba(0,0,0,0.5)]">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Recommended order</p>
-            <h2 className="mt-2 text-2xl font-bold text-white">Do this first</h2>
-            <div className="mt-5 space-y-3">
-              {workChain.map((step, index) => (
-                <div key={step.title} className="relative rounded-lg border border-white/10 bg-white/[0.035] p-4">
-                  <div className="flex gap-4">
-                    <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border ${step.color}`}>
-                      <step.icon size={18} />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-black text-cyan-100">0{index + 1}</span>
-                        <h3 className="text-sm font-bold text-white">{step.title}</h3>
+          <aside className="space-y-4">
+            <LiveWorkspacePanel feature={activeFeature} onOpen={openFeature} />
+            <div className="rounded-lg border border-white/10 bg-slate-950 p-5 shadow-[0_24px_90px_rgba(0,0,0,0.5)]">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Recommended order</p>
+              <h2 className="mt-2 text-2xl font-bold text-white">Do this first</h2>
+              <div className="mt-5 space-y-3">
+                {workChain.map((step, index) => (
+                  <div key={step.title} className="living-surface relative rounded-lg border border-white/10 bg-white/[0.035] p-4">
+                    <div className="flex gap-4">
+                      <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border ${step.color}`}>
+                        <step.icon size={18} />
                       </div>
-                      <p className="mt-2 text-xs leading-5 text-slate-400">{step.text}</p>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-black text-cyan-100">0{index + 1}</span>
+                          <h3 className="text-sm font-bold text-white">{step.title}</h3>
+                        </div>
+                        <p className="mt-2 text-xs leading-5 text-slate-400">{step.text}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-            <div className="mt-4 rounded-lg border border-emerald-300/20 bg-emerald-300/10 p-4">
-              <p className="text-sm font-bold text-emerald-50">Best starting point</p>
-              <p className="mt-2 text-xs leading-5 text-emerald-100/75">
-                If you are unsure, start with Cost Estimator. It gives the fastest clarity.
-              </p>
+                ))}
+              </div>
             </div>
           </aside>
         </section>
@@ -318,7 +316,7 @@ export default function Dashboard() {
 
           <div className="grid gap-4 lg:grid-cols-3">
             {startTools.map((feature, index) => (
-              <FeatureCard key={feature.title} feature={feature} index={index} onOpen={openFeature} large />
+              <FeatureCard key={feature.title} feature={feature} index={index} onOpen={openFeature} onPreview={setActiveFeature} active={activeFeature.title === feature.title} large />
             ))}
           </div>
         </section>
@@ -331,7 +329,7 @@ export default function Dashboard() {
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
               {supportTools.map((feature, index) => (
-                <FeatureCard key={feature.title} feature={feature} index={index} onOpen={openFeature} />
+                <FeatureCard key={feature.title} feature={feature} index={index} onOpen={openFeature} onPreview={setActiveFeature} active={activeFeature.title === feature.title} />
               ))}
             </div>
           </div>
@@ -348,7 +346,7 @@ export default function Dashboard() {
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               {laterTools.map((feature, index) => (
-                <FeatureCard key={feature.title} feature={feature} index={index} onOpen={openFeature} muted />
+                <FeatureCard key={feature.title} feature={feature} index={index} onOpen={openFeature} onPreview={setActiveFeature} active={activeFeature.title === feature.title} muted />
               ))}
             </div>
           </div>
@@ -401,12 +399,16 @@ function FeatureCard({
   feature,
   index,
   onOpen,
+  onPreview,
+  active = false,
   large = false,
   muted = false,
 }: {
   feature: DashboardFeature;
   index: number;
   onOpen: (feature: DashboardFeature) => void;
+  onPreview?: (feature: DashboardFeature) => void;
+  active?: boolean;
   large?: boolean;
   muted?: boolean;
 }) {
@@ -419,7 +421,9 @@ function FeatureCard({
       whileHover={{ y: feature.ready ? -5 : -2 }}
       whileTap={{ scale: 0.985 }}
       onClick={() => onOpen(feature)}
-      className={`group relative overflow-hidden rounded-lg border border-white/10 bg-slate-950 p-5 text-left shadow-[0_18px_60px_rgba(0,0,0,0.34)] transition-all hover:bg-[#071120] ${feature.glow} ${muted ? 'opacity-80 hover:opacity-100' : ''}`}
+      onMouseEnter={() => onPreview?.(feature)}
+      onFocus={() => onPreview?.(feature)}
+      className={`living-surface group relative overflow-hidden rounded-lg border bg-slate-950 p-5 text-left shadow-[0_18px_60px_rgba(0,0,0,0.34)] transition-all hover:bg-[#071120] ${active ? 'border-cyan-300/45 shadow-[0_0_44px_rgba(34,211,238,0.16)]' : 'border-white/10'} ${feature.glow} ${muted ? 'opacity-80 hover:opacity-100' : ''}`}
     >
       <div className={`absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r ${feature.accent}`} />
       <div className="absolute right-[-56px] top-[-56px] h-36 w-36 rounded-full border border-white/10" />
@@ -447,6 +451,55 @@ function FeatureCard({
         </div>
       </div>
     </motion.button>
+  );
+}
+
+function LiveWorkspacePanel({ feature, onOpen }: { feature: DashboardFeature; onOpen: (feature: DashboardFeature) => void }) {
+  const Icon = feature.icon;
+  const readiness = feature.ready ? 92 : 42;
+
+  return (
+    <motion.div
+      key={feature.title}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="living-surface overflow-hidden rounded-lg border border-cyan-300/20 bg-slate-950 p-5 shadow-[0_24px_90px_rgba(0,0,0,0.5)]"
+    >
+      <div className="live-grid absolute inset-0 opacity-20" />
+      <div className="relative z-10">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-100">Live focus</p>
+            <h2 className="mt-2 text-2xl font-black text-white">{feature.title}</h2>
+          </div>
+          <div className={`flex h-12 w-12 items-center justify-center rounded-lg border ${feature.iconTone}`}>
+            <Icon size={20} />
+          </div>
+        </div>
+        <p className="mt-4 text-sm leading-6 text-slate-400">{feature.description}</p>
+        <div className="mt-5 rounded-lg border border-white/10 bg-black/20 p-4">
+          <div className="mb-2 flex items-center justify-between text-xs font-bold uppercase tracking-[0.14em] text-slate-500">
+            <span>Readiness</span>
+            <span className={feature.ready ? 'text-emerald-200' : 'text-amber-200'}>{feature.signal}</span>
+          </div>
+          <div className="h-2 overflow-hidden rounded-full bg-white/10">
+            <motion.div
+              className={`h-full rounded-full bg-gradient-to-r ${feature.accent}`}
+              initial={{ width: 0 }}
+              animate={{ width: `${readiness}%` }}
+              transition={{ duration: 0.5 }}
+            />
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => onOpen(feature)}
+          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-cyan-300 px-4 py-3 text-sm font-black text-slate-950 transition-all hover:-translate-y-0.5 hover:bg-cyan-200"
+        >
+          {feature.action} {feature.ready ? <FaArrowRight size={13} /> : <FaLock size={12} />}
+        </button>
+      </div>
+    </motion.div>
   );
 }
 

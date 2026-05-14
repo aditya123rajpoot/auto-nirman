@@ -36,6 +36,13 @@ const steps = [
   { icon: FaCheckCircle, title: 'Use the output', text: 'Download a report, estimate, or map for the next meeting.' },
 ];
 
+const liveModules = [
+  { key: 'BOQ', title: 'Cost leakage scan', value: 'Rs 1.8Cr', note: '3 items need review', tone: 'text-cyan-100', bar: 'w-[78%]' },
+  { key: 'Cost', title: 'Budget confidence', value: '94%', note: 'Tier-2 pricing matched', tone: 'text-emerald-100', bar: 'w-[94%]' },
+  { key: 'Map', title: 'Plan readiness', value: 'JPEG ready', note: 'Rooms clipped to boundary', tone: 'text-orange-100', bar: 'w-[88%]' },
+  { key: 'AI', title: 'Assistant status', value: 'Online', note: 'Construction context loaded', tone: 'text-violet-100', bar: 'w-[82%]' },
+];
+
 export default function Home() {
   const router = useRouter();
   const [showTour, setShowTour] = useState(false);
@@ -135,12 +142,15 @@ function DesktopHome({ push, openTour }: { push: (href: string) => void; openTou
           {tools.map(tool => (
             <div
               key={tool.title}
-              className="rounded-lg border border-white/10 bg-slate-950 p-5 text-left shadow-[0_18px_60px_rgba(0,0,0,0.28)]"
+              className="living-surface signal-sweep group rounded-lg border border-white/10 bg-slate-950 p-5 text-left shadow-[0_18px_60px_rgba(0,0,0,0.28)] transition-all duration-300 hover:-translate-y-1 hover:border-cyan-300/35 hover:bg-[#071120]"
             >
               <div className={`h-1.5 w-16 rounded-full bg-gradient-to-r ${tool.tone}`} />
-              <tool.icon className="mt-6 text-cyan-100" size={24} />
+              <tool.icon className="mt-6 text-cyan-100 transition-transform duration-300 group-hover:scale-110" size={24} />
               <h2 className="mt-6 text-xl font-black text-white">{tool.title}</h2>
               <p className="mt-3 text-sm leading-6 text-slate-400">{tool.text}</p>
+              <div className="mt-5 h-1.5 overflow-hidden rounded-full bg-white/10">
+                <div className={`h-full rounded-full bg-gradient-to-r ${tool.tone} transition-all duration-500 group-hover:w-full ${tool.title === 'BOQ leakage' ? 'w-[74%]' : tool.title === 'Budget clarity' ? 'w-[92%]' : tool.title === 'Planning output' ? 'w-[86%]' : 'w-[80%]'}`} />
+              </div>
             </div>
           ))}
         </div>
@@ -240,9 +250,12 @@ function MobileHome({ push, openTour }: { push: (href: string) => void; openTour
 }
 
 function ProductVisual() {
+  const [activeModule, setActiveModule] = useState(liveModules[0]);
+
   return (
-    <div className="relative overflow-hidden rounded-lg border border-white/10 bg-slate-950 p-5 shadow-[0_34px_130px_rgba(0,0,0,0.66)]">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_10%,rgba(34,211,238,0.18),transparent_30%),radial-gradient(circle_at_16%_74%,rgba(251,146,60,0.1),transparent_34%)]" />
+    <div className="living-surface relative overflow-hidden rounded-lg border border-white/10 bg-slate-950 p-5 shadow-[0_34px_130px_rgba(0,0,0,0.66)]">
+      <div className="absolute inset-0 live-grid opacity-40" />
+      <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(34,211,238,0.12),transparent_34%,rgba(251,146,60,0.08))]" />
       <div className="relative z-10">
         <div className="flex items-center justify-between border-b border-white/10 pb-4">
           <div className="flex items-center gap-3">
@@ -252,22 +265,28 @@ function ProductVisual() {
               <p className="text-xs text-slate-500">Onboarding intelligence preview</p>
             </div>
           </div>
-          <span className="rounded-full border border-emerald-300/25 bg-emerald-300/10 px-3 py-1 text-xs font-bold text-emerald-100">Ready</span>
+          <span className="inline-flex items-center gap-2 rounded-full border border-emerald-300/25 bg-emerald-300/10 px-3 py-1 text-xs font-bold text-emerald-100">
+            <span className="pulse-dot h-2 w-2 rounded-full bg-emerald-300" /> Live
+          </span>
         </div>
 
         <div className="mt-5 grid grid-cols-[1.1fr_0.9fr] gap-4">
-          <div className="rounded-lg border border-white/10 bg-white/[0.035] p-5">
-            <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Possible saving</p>
-            <p className="mt-4 text-5xl font-black text-cyan-100">Rs 1.8Cr</p>
+          <motion.div layout className="rounded-lg border border-white/10 bg-white/[0.035] p-5">
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">{activeModule.title}</p>
+            <p className={`mt-4 text-5xl font-black ${activeModule.tone}`}>{activeModule.value}</p>
+            <p className="mt-2 text-sm font-semibold text-slate-400">{activeModule.note}</p>
+            <div className="mt-5 h-2 rounded-full bg-white/10">
+              <motion.div layout className={`h-full rounded-full bg-cyan-300 ${activeModule.bar}`} />
+            </div>
             <div className="mt-6 space-y-3">
               {['Steel rate above benchmark', 'Duplicate finishing item', 'Missing waterproofing scope'].map((item, index) => (
-                <div key={item} className="flex items-center justify-between rounded-lg border border-white/10 bg-slate-950 px-4 py-3">
+                <div key={item} className="group flex items-center justify-between rounded-lg border border-white/10 bg-slate-950 px-4 py-3 transition-all hover:border-cyan-300/30 hover:bg-cyan-300/10">
                   <span className="text-sm text-slate-300">{item}</span>
-                  <span className={index === 0 ? 'text-orange-200' : index === 1 ? 'text-cyan-200' : 'text-emerald-200'}>Check</span>
+                  <span className={`${index === 0 ? 'text-orange-200' : index === 1 ? 'text-cyan-200' : 'text-emerald-200'} transition-transform group-hover:translate-x-1`}>Check</span>
                 </div>
               ))}
             </div>
-          </div>
+          </motion.div>
 
           <div className="space-y-4">
             <div className="rounded-lg border border-white/10 bg-white/[0.035] p-4">
@@ -290,10 +309,16 @@ function ProductVisual() {
         </div>
 
         <div className="mt-4 grid grid-cols-4 gap-3">
-          {['BOQ', 'Cost', 'Map', 'AI'].map(item => (
-            <div key={item} className="rounded-lg border border-white/10 bg-slate-950 p-3 text-center text-xs font-bold text-slate-300">
-              {item}
-            </div>
+          {liveModules.map(item => (
+            <button
+              key={item.key}
+              type="button"
+              onMouseEnter={() => setActiveModule(item)}
+              onFocus={() => setActiveModule(item)}
+              className={`rounded-lg border p-3 text-center text-xs font-bold transition-all ${activeModule.key === item.key ? 'border-cyan-300/50 bg-cyan-300/12 text-cyan-50 shadow-[0_0_22px_rgba(34,211,238,0.16)]' : 'border-white/10 bg-slate-950 text-slate-300 hover:border-cyan-300/30 hover:text-white'}`}
+            >
+              {item.key}
+            </button>
           ))}
         </div>
       </div>

@@ -85,7 +85,7 @@ function NumberField({ label, value, onChange, error, suffix, helper, Icon }: {
   Icon: typeof Ruler
 }) {
   return (
-    <label className="block rounded-lg border border-white/10 bg-slate-950/70 p-4 transition-colors focus-within:border-cyan-300/70 focus-within:bg-slate-950">
+    <label className="living-surface block rounded-lg border border-white/10 bg-slate-950/70 p-4 transition-all focus-within:-translate-y-0.5 focus-within:border-cyan-300/70 focus-within:bg-slate-950">
       <span className="mb-3 flex items-center justify-between gap-3">
         <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
           <Icon size={15} className="text-cyan-200" /> {label}
@@ -130,7 +130,7 @@ function ChoiceCard({ active, label, note, marker, onClick }: {
       type="button"
       onClick={onClick}
       className={classNames(
-        'group min-h-20 rounded-lg border p-3 text-left transition-all',
+        'living-surface group min-h-20 rounded-lg border p-3 text-left transition-all hover:-translate-y-0.5',
         active
           ? 'border-cyan-300/70 bg-cyan-300/10 shadow-[0_0_0_1px_rgba(103,232,249,0.18),0_18px_45px_rgba(8,47,73,0.22)]'
           : 'border-white/10 bg-white/[0.035] hover:border-white/25 hover:bg-white/[0.055]'
@@ -172,7 +172,7 @@ function AddonTile({ active, label, note, Icon, onClick }: {
       type="button"
       onClick={onClick}
       className={classNames(
-        'flex min-h-24 items-start gap-3 rounded-lg border p-3 text-left transition-all',
+        'living-surface flex min-h-24 items-start gap-3 rounded-lg border p-3 text-left transition-all hover:-translate-y-0.5',
         active
           ? 'border-emerald-300/50 bg-emerald-300/10 text-emerald-50'
           : 'border-white/10 bg-white/[0.035] text-slate-300 hover:border-white/25 hover:bg-white/[0.055]'
@@ -208,6 +208,52 @@ function RangeTrack({ result }: { result: EstimateResult }) {
         <span className="font-semibold text-emerald-100">{formatINR(result.low)}</span>
         <span className="text-center font-semibold text-white">{formatINR(result.totalCost)}</span>
         <span className="text-right font-semibold text-amber-100">{formatINR(result.high)}</span>
+      </div>
+    </div>
+  )
+}
+
+function LiveCostPreview({ input, coverage }: { input: EstimateInput; coverage: number }) {
+  const tierRate = { metro: 2550, tier1: 2250, tier2: 1900, tier3: 1650 }[input.cityTier]
+  const qualityMultiplier = { basic: 0.88, standard: 1, premium: 1.24 }[input.quality]
+  const typeMultiplier = { independent: 1, villa: 1.16, row: 0.95 }[input.houseType]
+  const floorLoad = 1 + Math.max(0, input.floors - 1) * 0.055
+  const addonLoad = [input.basement, input.parking, input.lift, input.vastu, input.solarReady].filter(Boolean).length * 0.035
+  const rate = Math.round(tierRate * qualityMultiplier * typeMultiplier * floorLoad)
+  const total = Math.round(input.builtSqft * rate * (1 + addonLoad))
+  const signal = coverage > 90 ? 'High site coverage' : coverage > 65 ? 'Balanced coverage' : 'Low coverage'
+
+  return (
+    <div className="living-surface overflow-hidden rounded-lg border border-cyan-300/15 bg-slate-950/75 p-4 shadow-2xl shadow-cyan-950/20">
+      <div className="live-grid absolute inset-0 opacity-20" />
+      <div className="relative z-10">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-100">Live estimate signal</p>
+            <h2 className="mt-2 text-3xl font-black text-white">{formatINR(total)}</h2>
+          </div>
+          <div className="flex h-11 w-11 items-center justify-center rounded-lg border border-cyan-200/20 bg-cyan-300/10 text-cyan-100">
+            <BarChart3 size={20} />
+          </div>
+        </div>
+        <p className="mt-3 text-sm leading-6 text-slate-400">
+          Rough live pulse before final calculation. It reacts to area, tier, floors, quality, and selected add-ons.
+        </p>
+        <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+          {[
+            [`Rs ${rate.toLocaleString('en-IN')}`, 'per sq ft'],
+            [`${coverage}%`, 'coverage'],
+            [signal, 'site signal'],
+          ].map(([value, label]) => (
+            <div key={label} className="rounded-lg border border-white/10 bg-white/[0.035] p-3">
+              <p className="text-sm font-black text-white">{value}</p>
+              <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">{label}</p>
+            </div>
+          ))}
+        </div>
+        <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10">
+          <div className="h-full rounded-full bg-gradient-to-r from-emerald-300 via-cyan-300 to-amber-300 transition-all duration-500" style={{ width: `${Math.min(100, Math.max(16, coverage))}%` }} />
+        </div>
       </div>
     </div>
   )
@@ -426,6 +472,10 @@ export default function CostEstimator({ apiUrl }: { apiUrl?: string }) {
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="mb-6">
+        <LiveCostPreview input={input} coverage={coverage} />
       </div>
 
       <div className="overflow-hidden rounded-lg border border-white/10 bg-slate-950/70 shadow-2xl shadow-black/40 backdrop-blur">
