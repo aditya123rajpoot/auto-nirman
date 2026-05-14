@@ -1,18 +1,18 @@
 import type { Map2DInput, Map2DLayout, Map2DPoint, Map2DRoom } from '@/types/map2d';
 
 const roomColors: Record<Map2DRoom['type'], string> = {
-  living: '#2dd4bf',
+  living: '#22d3ee',
   kitchen: '#f59e0b',
   bedroom: '#60a5fa',
-  bath: '#a78bfa',
+  bath: '#c084fc',
   parking: '#94a3b8',
   stair: '#fb7185',
   dining: '#34d399',
   utility: '#f472b6',
   circulation: '#38bdf8',
-  court: '#84cc16',
+  court: '#a3e635',
   balcony: '#22c55e',
-  store: '#c084fc',
+  store: '#e879f9',
 };
 
 function clamp(value: number, min: number, max: number) {
@@ -48,6 +48,119 @@ function polygonArea(points: Map2DPoint[]) {
     return total + point.x * next.y - next.x * point.y;
   }, 0);
   return Math.abs(sum) / 2;
+}
+
+function polygonSignedArea(points: Map2DPoint[]) {
+  if (points.length < 3) return 0;
+  return points.reduce((total, point, index) => {
+    const next = points[(index + 1) % points.length];
+    return total + point.x * next.y - next.x * point.y;
+  }, 0) / 2;
+}
+
+function rectToPolygon(item: Pick<Map2DRoom, 'x' | 'y' | 'width' | 'height'>): Map2DPoint[] {
+  return [
+    { x: item.x, y: item.y },
+    { x: item.x + item.width, y: item.y },
+    { x: item.x + item.width, y: item.y + item.height },
+    { x: item.x, y: item.y + item.height },
+  ];
+}
+
+function interpolateLine(a: Map2DPoint, b: Map2DPoint, t: number): Map2DPoint {
+  return {
+    x: a.x + (b.x - a.x) * t,
+    y: a.y + (b.y - a.y) * t,
+  };
+}
+
+function lineIntersection(a: Map2DPoint, b: Map2DPoint, edgeA: Map2DPoint, edgeB: Map2DPoint) {
+  const dx1 = b.x - a.x;
+  const dy1 = b.y - a.y;
+  const dx2 = edgeB.x - edgeA.x;
+  const dy2 = edgeB.y - edgeA.y;
+  const denominator = dx1 * dy2 - dy1 * dx2;
+  if (Math.abs(denominator) < 0.00001) return b;
+  const t = ((edgeA.x - a.x) * dy2 - (edgeA.y - a.y) * dx2) / denominator;
+  return interpolateLine(a, b, t);
+}
+
+function clipPolygon(subject: Map2DPoint[], clip: Map2DPoint[]) {
+  if (subject.length < 3 || clip.length < 3) return [];
+  const clockwise = polygonSignedArea(clip) < 0;
+  let output = subject;
+
+  for (let index = 0; index < clip.length; index += 1) {
+    const edgeA = clip[index];
+    const edgeB = clip[(index + 1) % clip.length];
+    const input = output;
+    output = [];
+    if (!input.length) break;
+
+    const inside = (point: Map2DPoint) => {
+      const cross = (edgeB.x - edgeA.x) * (point.y - edgeA.y) - (edgeB.y - edgeA.y) * (point.x - edgeA.x);
+      return clockwise ? cross <= 0.0001 : cross >= -0.0001;
+    };
+
+    let previous = input[input.length - 1];
+    for (const current of input) {
+      const currentInside = inside(current);
+      const previousInside = inside(previous);
+
+      if (currentInside) {
+        if (!previousInside) output.push(lineIntersection(previous, current, edgeA, edgeB));
+        output.push(current);
+      } else if (previousInside) {
+        output.push(lineIntersection(previous, current, edgeA, edgeB));
+      }
+      previous = current;
+    }
+  }
+
+  return output.filter((point, index, points) => {
+    const prev = points[(index + points.length - 1) % points.length];
+    return !prev || Math.hypot(point.x - prev.x, point.y - prev.y) > 0.04;
+  });
+}
+
+function scaledPolygon(points: Map2DPoint[], inset: number) {
+  const center = points.reduce(
+    (sum, point) => ({ x: sum.x + point.x / points.length, y: sum.y + point.y / points.length }),
+    { x: 0, y: 0 }
+  );
+  const bounds = polygonBounds(points);
+  const radius = Math.max(bounds.maxX - bounds.minX, bounds.maxY - bounds.minY, 1);
+  const factor = Math.max(0.82, 1 - inset / radius);
+  return points.map(point => ({
+    x: center.x + (point.x - center.x) * factor,
+    y: center.y + (point.y - center.y) * factor,
+  }));
+}
+
+function roomPolygonBounds(points: Map2DPoint[]) {
+  return polygonBounds(points);
+}
+
+function enhanceRoomsWithPolygons(rooms: Map2DRoom[], plotPolygon: Map2DPoint[], fallbackBounds: ReturnType<typeof polygonBounds>) {
+  return rooms
+    .map(item => {
+      const clipped = clipPolygon(rectToPolygon(item), plotPolygon);
+      const points = clipped.length >= 3 ? clipped : clipPolygon(rectToPolygon(item), [
+        { x: fallbackBounds.minX, y: fallbackBounds.minY },
+        { x: fallbackBounds.maxX, y: fallbackBounds.minY },
+        { x: fallbackBounds.maxX, y: fallbackBounds.maxY },
+        { x: fallbackBounds.minX, y: fallbackBounds.maxY },
+      ]);
+      const areaSqft = polygonArea(points);
+      const bounds = roomPolygonBounds(points);
+      return {
+        ...item,
+        points,
+        areaSqft,
+        dimensions: `${Math.max(0, bounds.maxX - bounds.minX).toFixed(1)}' x ${Math.max(0, bounds.maxY - bounds.minY).toFixed(1)}'`,
+      };
+    })
+    .filter(item => (item.areaSqft ?? 0) >= 18 && (item.points?.length ?? 0) >= 3);
 }
 
 function polygonBounds(points: Map2DPoint[]) {
@@ -121,16 +234,30 @@ function createAIRooms(input: Map2DInput, bounds: ReturnType<typeof polygonBound
   const bathrooms = rooms.filter(item => item.type === 'bath').length;
   const hasLiving = rooms.some(item => item.type === 'living');
   const hasKitchen = rooms.some(item => item.type === 'kitchen');
+  const hasCirculation = rooms.some(item => item.type === 'circulation');
 
-  if (bedrooms < bedroomCount || bathrooms < bathroomCount || !hasLiving || !hasKitchen) return null;
+  if (bedrooms < bedroomCount || bathrooms < bathroomCount || !hasLiving || !hasKitchen || !hasCirculation) return null;
+
+  const practicalRooms = rooms.every(item => {
+    if (item.type === 'bedroom') return item.width >= 8 && item.height >= 9 && item.width * item.height >= 80;
+    if (item.type === 'living') return item.width >= 10 && item.height >= 10;
+    if (item.type === 'kitchen') return item.width >= 7 && item.height >= 7;
+    if (item.type === 'bath') return item.width >= 4 && item.height >= 5;
+    if (item.type === 'circulation') return item.width >= 3.5 && item.height >= 8;
+    return true;
+  });
+
+  if (!practicalRooms) return null;
 
   const totalOverlap = rooms.reduce((sum, current, index) => {
     const rest = rooms.slice(index + 1);
     return sum + rest.reduce((innerSum, next) => innerSum + overlapArea(current, next), 0);
   }, 0);
   const totalArea = rooms.reduce((sum, item) => sum + item.width * item.height, 0);
+  const buildableArea = Math.max(1, (bounds.maxX - bounds.minX - setback * 2) * (bounds.maxY - bounds.minY - setback * 2));
 
   if (totalArea <= 0 || totalOverlap / totalArea > 0.08) return null;
+  if (totalArea / buildableArea < 0.68 || totalArea / buildableArea > 1.04) return null;
 
   return fitRoomsToBuildableArea(rooms, bounds, setback);
 }
@@ -142,23 +269,6 @@ function addArchitecturalPockets(rooms: Map2DRoom[], input: Map2DInput, bounds: 
   const buildableWidth = Math.max(16, bounds.maxX - bounds.minX - setback * 2);
   const buildableLength = Math.max(22, bounds.maxY - bounds.minY - setback * 2);
   const occupied = roomBounds(refined);
-  const centerX = buildableX + buildableWidth * 0.5;
-  const centerY = buildableY + buildableLength * 0.5;
-
-  const hasCirculation = refined.some(item => item.type === 'circulation');
-  if (!hasCirculation) {
-    const passageWidth = clamp(buildableWidth * 0.18, 4, 7);
-    const passageHeight = clamp(buildableLength * 0.42, 10, 22);
-    refined.push(room(
-      'refine-lobby',
-      input.planStyle === 'premium' ? 'Family Lobby' : 'Lobby / Passage',
-      'circulation',
-      centerX - passageWidth / 2,
-      centerY - passageHeight / 2,
-      passageWidth,
-      passageHeight
-    ));
-  }
 
   const rightGap = buildableX + buildableWidth - occupied.maxX;
   if (rightGap > 4.5) {
@@ -196,21 +306,6 @@ function addArchitecturalPockets(rooms: Map2DRoom[], input: Map2DInput, bounds: 
       buildableY,
       buildableWidth * 0.84,
       topGap
-    ));
-  }
-
-  const serviceRoom = refined.find(item => item.type === 'kitchen' || item.type === 'utility');
-  if (serviceRoom && !refined.some(item => item.type === 'store')) {
-    const storeWidth = clamp(serviceRoom.width * 0.42, 4, 6);
-    const storeHeight = clamp(serviceRoom.height * 0.45, 4, 6);
-    refined.push(room(
-      'refine-store',
-      'Store',
-      'store',
-      Math.min(serviceRoom.x + serviceRoom.width - storeWidth, buildableX + buildableWidth - storeWidth),
-      Math.min(serviceRoom.y + serviceRoom.height, buildableY + buildableLength - storeHeight),
-      storeWidth,
-      storeHeight
     ));
   }
 
@@ -254,9 +349,9 @@ export function generateMap2DLayout(input: Map2DInput): Map2DLayout {
   const plotArea = polygon ? polygonArea(polygon) : input.plotLength * input.plotWidth;
   const availableWidth = Math.max(18, bounds.maxX - bounds.minX);
   const availableLength = Math.max(25, bounds.maxY - bounds.minY);
-  const setback = input.parking ? 3 : 2;
-  const buildableWidth = Math.max(16, availableWidth - setback * 2);
-  const buildableLength = Math.max(22, availableLength - setback * 2);
+  const planningInset = 0;
+  const buildableWidth = Math.max(16, availableWidth - planningInset * 2);
+  const buildableLength = Math.max(22, availableLength - planningInset * 2);
   const styleBoost = aiPlan?.strategy === 'premium_family' || planStyle === 'premium' ? 1.14 : aiPlan?.strategy === 'compact_core' || planStyle === 'compact' ? 0.88 : 1;
   const livingBias = aiPlan?.roomEmphasis === 'living' ? 1.12 : aiPlan?.roomEmphasis === 'bedrooms' ? 0.92 : 1;
   const frontDepth = input.parking
@@ -264,62 +359,84 @@ export function generateMap2DLayout(input: Map2DInput): Map2DLayout {
     : clamp(buildableLength * 0.18 * styleBoost * livingBias, 8, planStyle === 'premium' ? 17 : 14);
   const middleDepth = clamp(buildableLength * (planStyle === 'compact' ? 0.24 : 0.28) * livingBias, 9, planStyle === 'premium' ? 19 : 17);
   const rearDepth = buildableLength - frontDepth - middleDepth;
-  const leftWidth = buildableWidth * 0.5;
-  const rightWidth = buildableWidth - leftWidth;
+  const passageWidth = clamp(buildableWidth * (planStyle === 'premium' ? 0.16 : 0.13), 4, 5.8);
+  const sideWidth = (buildableWidth - passageWidth) / 2;
+  const leftWidth = sideWidth;
+  const rightWidth = sideWidth;
   const rooms: Map2DRoom[] = [];
 
-  const bx = bounds.minX + setback;
-  const by = bounds.minY + setback;
+  const bx = bounds.minX + planningInset;
+  const by = bounds.minY + planningInset;
+  const passageX = bx + leftWidth;
+  const rightX = passageX + passageWidth;
+  const stairWidth = input.staircase ? clamp(buildableWidth * 0.22, 7, 8.5) : 0;
+  const stairHeight = input.staircase ? Math.min(11, frontDepth * 0.74) : 0;
+  const stairX = bx + buildableWidth - stairWidth;
+  const parkingFrontWidth = input.parking ? clamp(buildableWidth * 0.34, 10, 13.5) : 0;
+  const frontLivingX = input.parking ? bx + parkingFrontWidth : bx;
+  const frontLivingWidth = Math.max(10, buildableWidth - parkingFrontWidth - stairWidth);
 
   if (input.parking) {
-    rooms.push(room('parking', 'Covered Parking', 'parking', bx, by, leftWidth, frontDepth));
-    rooms.push(room('living', 'Living Lounge', 'living', bx + leftWidth, by, rightWidth, frontDepth));
+    rooms.push(room('parking', 'Covered Parking', 'parking', bx, by, parkingFrontWidth, frontDepth));
+    rooms.push(room('living', 'Living Lounge', 'living', frontLivingX, by, frontLivingWidth, frontDepth));
   } else {
-    rooms.push(room('living', 'Living Lounge', 'living', bx, by, buildableWidth, frontDepth));
+    rooms.push(room('living', 'Living Lounge', 'living', bx, by, input.staircase ? buildableWidth - stairWidth : buildableWidth, frontDepth));
+  }
+
+  if (input.staircase) {
+    rooms.push(room('stair', 'Staircase', 'stair', stairX, by, stairWidth, stairHeight));
   }
 
   rooms.push(room('dining', 'Dining Core', 'dining', bx, by + frontDepth, leftWidth, middleDepth));
-  rooms.push(room('kitchen', input.vastu ? 'Kitchen SE Zone' : 'Kitchen', 'kitchen', bx + leftWidth, by + frontDepth, rightWidth, middleDepth * 0.62));
-  rooms.push(room('utility', 'Utility', 'utility', bx + leftWidth, by + frontDepth + middleDepth * 0.62, rightWidth, middleDepth * 0.38));
+  rooms.push(room('lobby', planStyle === 'premium' ? 'Family Lobby' : 'Lobby / Passage', 'circulation', passageX, by + frontDepth, passageWidth, middleDepth + rearDepth));
+  rooms.push(room('kitchen', input.vastu ? 'Kitchen SE Zone' : 'Kitchen', 'kitchen', rightX, by + frontDepth, rightWidth, middleDepth * 0.62));
+  rooms.push(room('utility', 'Utility', 'utility', rightX, by + frontDepth + middleDepth * 0.62, rightWidth, middleDepth * 0.38));
 
   const bedroomZoneY = by + frontDepth + middleDepth;
   const bedRows = bedroomCount === 2 ? 2 : 3;
   const bedRowHeight = rearDepth / bedRows;
-  const bathWidth = clamp(rightWidth * 0.42, 5, 8.5);
-  const bedRightWidth = Math.max(7, rightWidth - bathWidth);
+  const bathDepth = clamp(rearDepth / (bathroomCount + 1.6), 5.5, 8);
 
   rooms.push(room('bed-1', 'Master Bedroom', 'bedroom', bx, bedroomZoneY, leftWidth, bedroomCount === 2 ? rearDepth * 0.62 : bedRowHeight * 1.15));
-  rooms.push(room('bed-2', 'Bedroom 2', 'bedroom', bx + leftWidth, bedroomZoneY, bathroomCount > 1 ? bedRightWidth : rightWidth, bathroomCount > 1 ? (bedroomCount === 2 ? rearDepth * 0.58 : bedRowHeight) : rearDepth * 0.58));
+  rooms.push(room('bed-2', 'Bedroom 2', 'bedroom', rightX, bedroomZoneY, rightWidth, bathroomCount > 1 ? Math.max(8, rearDepth - bathDepth * bathroomCount) : rearDepth * 0.58));
 
   if (bedroomCount >= 3) {
     rooms.push(room('bed-3', 'Bedroom 3', 'bedroom', bx, bedroomZoneY + bedRowHeight * 1.15, leftWidth, rearDepth - bedRowHeight * 1.15));
   }
 
   if (bathroomCount === 1) {
-    rooms.push(room('bath-1', 'Bath / WC', 'bath', bx + leftWidth, bedroomZoneY + rearDepth * 0.58, rightWidth, rearDepth * 0.42));
+    rooms.push(room('bath-1', 'Bath / WC', 'bath', rightX, bedroomZoneY + rearDepth * 0.58, rightWidth, rearDepth * 0.42));
   } else {
-    const bathHeight = rearDepth / bathroomCount;
+    const bathHeight = Math.min(bathDepth, rearDepth / bathroomCount);
     for (let index = 0; index < bathroomCount; index += 1) {
-      const y = bedroomZoneY + index * bathHeight;
+      const y = bedroomZoneY + rearDepth - (bathroomCount - index) * bathHeight;
       const label = index === 0 ? 'Attached Bath' : `Bath ${index + 1}`;
-      rooms.push(room(`bath-${index + 1}`, label, 'bath', bx + leftWidth + bedRightWidth, y, bathWidth, bathHeight));
+      rooms.push(room(`bath-${index + 1}`, label, 'bath', rightX, y, rightWidth, bathHeight));
     }
   }
 
-  if (input.staircase) {
-    const stairWidth = Math.min(9, rightWidth * 0.45);
-    const stairHeight = Math.min(11, frontDepth * 0.75);
-    rooms.push(room('stair', 'Staircase', 'stair', bx + buildableWidth - stairWidth, by, stairWidth, stairHeight));
-  }
-
-  const aiRooms = createAIRooms(input, bounds, bedroomCount, bathroomCount, setback);
-  const finalRooms = addArchitecturalPockets(aiRooms ?? rooms, input, bounds, setback);
+  const aiRooms = createAIRooms(input, bounds, bedroomCount, bathroomCount, planningInset);
+  const rawRooms = addArchitecturalPockets(aiRooms ?? rooms, input, bounds, planningInset);
+  const renderPolygon = polygon ?? [
+    { x: bounds.minX, y: bounds.minY },
+    { x: bounds.maxX, y: bounds.minY },
+    { x: bounds.maxX, y: bounds.maxY },
+    { x: bounds.minX, y: bounds.maxY },
+  ];
+  const buildablePolygon = input.plotMode === 'trace' && polygon ? polygon : [
+    { x: bounds.minX, y: bounds.minY },
+    { x: bounds.maxX, y: bounds.minY },
+    { x: bounds.maxX, y: bounds.maxY },
+    { x: bounds.minX, y: bounds.maxY },
+  ];
+  const finalRooms = enhanceRoomsWithPolygons(rawRooms, buildablePolygon, bounds);
 
   const doors = [
-    { x: bx + buildableWidth * 0.45, y: by, width: 4, orientation: 'north' as const },
-    { x: bx + leftWidth - 0.2, y: by + frontDepth + middleDepth * 0.35, width: 3, orientation: 'east' as const },
-    { x: bx + leftWidth + 1, y: by + frontDepth, width: 3, orientation: 'south' as const },
-    { x: bx + leftWidth - 0.2, y: by + frontDepth + middleDepth + 2, width: 3, orientation: 'east' as const },
+    { x: passageX + passageWidth * 0.5 - 2, y: by, width: 4, orientation: 'north' as const },
+    { x: passageX - 0.15, y: by + frontDepth + middleDepth * 0.38, width: 3, orientation: 'east' as const },
+    { x: rightX + rightWidth * 0.2, y: by + frontDepth, width: 3, orientation: 'south' as const },
+    { x: passageX - 0.15, y: bedroomZoneY + 2, width: 3, orientation: 'east' as const },
+    { x: rightX + rightWidth * 0.2, y: bedroomZoneY, width: 3, orientation: 'south' as const },
   ];
 
   const windows = finalRooms
@@ -331,7 +448,7 @@ export function generateMap2DLayout(input: Map2DInput): Map2DLayout {
       orientation: 'north' as const,
     }));
 
-  const usedArea = finalRooms.reduce((sum, item) => sum + item.width * item.height, 0);
+  const usedArea = finalRooms.reduce((sum, item) => sum + (item.areaSqft ?? item.width * item.height), 0);
   const scoreAdjustments = aiPlan?.scoreAdjustments ?? {};
   const efficiency = clamp(Math.round((usedArea / plotArea) * 100) + (scoreAdjustments.efficiency ?? 0), 55, input.plotMode === 'trace' ? 90 : 94);
   const vastuScore = clamp((input.vastu ? 94 : 78) + (scoreAdjustments.vastu ?? 0), 55, 98);
@@ -357,8 +474,8 @@ export function generateMap2DLayout(input: Map2DInput): Map2DLayout {
       width: input.plotWidth,
       buildableLength,
       buildableWidth,
-      setback,
-      polygon,
+      setback: planningInset,
+      polygon: renderPolygon,
       areaSqft: plotArea,
       bounds,
     },

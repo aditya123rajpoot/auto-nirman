@@ -70,6 +70,9 @@ export type Map2DRoom = {
   width: number;
   height: number;
   color: string;
+  points?: Map2DPoint[];
+  areaSqft?: number;
+  dimensions?: string;
 };
 
 export type Map2DDoor = {
