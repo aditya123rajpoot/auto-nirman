@@ -17,6 +17,7 @@ import {
   FaProjectDiagram,
   FaRobot,
   FaRoute,
+  FaSearch,
   FaUser,
 } from 'react-icons/fa';
 import { useEffect, useState } from 'react';
@@ -35,6 +36,16 @@ type DashboardFeature = {
   iconTone: string;
   action: string;
   category: 'start' | 'plan' | 'support' | 'later';
+};
+
+type WorkspaceItem = {
+  title: string;
+  label: string;
+  route: string;
+  action: string;
+  Icon: typeof FaRobot;
+  tone: string;
+  detail: string;
 };
 
 const features: DashboardFeature[] = [
@@ -198,16 +209,96 @@ const startTools = features.filter(feature => feature.category === 'start' || fe
 const supportTools = features.filter(feature => feature.category === 'support');
 const laterTools = features.filter(feature => feature.category === 'later');
 
+const MAP_STORAGE_KEY = 'auto_nirman_2d_map_layout';
+const ESTIMATE_STORAGE_KEY = 'auto_nirman_cost_estimate';
+
 export default function Dashboard() {
   const router = useRouter();
   const [comingSoon, setComingSoon] = useState<string | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [activeFeature, setActiveFeature] = useState<DashboardFeature>(startTools[0]);
+  const [workspaceItems, setWorkspaceItems] = useState<WorkspaceItem[]>([]);
+  const [commandQuery, setCommandQuery] = useState('');
 
   useEffect(() => {
     const onboarded = localStorage.getItem('autonirman_onboarded');
     if (!onboarded) setShowOnboarding(true);
+
+    const items: WorkspaceItem[] = [];
+    const estimate = sessionStorage.getItem(ESTIMATE_STORAGE_KEY);
+    const map = sessionStorage.getItem(MAP_STORAGE_KEY);
+
+    if (estimate) {
+      try {
+        const parsed = JSON.parse(estimate) as { input?: { builtSqft?: number; floors?: number }; createdAt?: string };
+        items.push({
+          title: 'Cost estimate',
+          label: 'Resume budget',
+          route: '/dashboard/cost-estimator/result',
+          action: 'Open estimate',
+          Icon: FaCalculator,
+          tone: 'from-emerald-300 to-cyan-300',
+          detail: `${parsed.input?.builtSqft?.toLocaleString('en-IN') ?? 'Project'} sq ft · ${parsed.input?.floors ?? '-'} floors`,
+        });
+      } catch {
+        items.push({
+          title: 'Cost estimate',
+          label: 'Resume budget',
+          route: '/dashboard/cost-estimator/result',
+          action: 'Open estimate',
+          Icon: FaCalculator,
+          tone: 'from-emerald-300 to-cyan-300',
+          detail: 'Saved in this session',
+        });
+      }
+    }
+
+    if (map) {
+      try {
+        const parsed = JSON.parse(map) as { input?: { houseType?: string; plotMode?: string }; plot?: { areaSqft?: number } };
+        items.push({
+          title: 'Floor plan',
+          label: 'Continue design',
+          route: '/dashboard/2d-map-generator/result',
+          action: 'Open plan',
+          Icon: FaMap,
+          tone: 'from-orange-300 to-cyan-300',
+          detail: `${parsed.input?.houseType?.toUpperCase() ?? 'Plan'} · ${Math.round(parsed.plot?.areaSqft ?? 0).toLocaleString('en-IN')} sq ft`,
+        });
+        items.push({
+          title: '3D walkthrough',
+          label: 'Step inside',
+          route: '/dashboard/future-home-walkthrough',
+          action: 'Open tour',
+          Icon: FaProjectDiagram,
+          tone: 'from-violet-300 to-cyan-300',
+          detail: 'Generated from your latest plan',
+        });
+      } catch {
+        items.push({
+          title: 'Floor plan',
+          label: 'Continue design',
+          route: '/dashboard/2d-map-generator/result',
+          action: 'Open plan',
+          Icon: FaMap,
+          tone: 'from-orange-300 to-cyan-300',
+          detail: 'Saved in this session',
+        });
+      }
+    }
+
+    setWorkspaceItems(items);
   }, []);
+
+  const commandResults = features.filter(feature => {
+    const haystack = `${feature.title} ${feature.description} ${feature.action}`.toLowerCase();
+    return commandQuery.trim() && haystack.includes(commandQuery.toLowerCase().trim());
+  }).slice(0, 4);
+
+  const runCommand = () => {
+    const target = commandResults[0] ?? features.find(feature => feature.ready);
+    if (target) openFeature(target);
+  };
 
   const openFeature = (feature: DashboardFeature) => {
     if (!feature.ready) {
@@ -234,9 +325,9 @@ export default function Dashboard() {
 
       <div className="relative z-10 mx-auto hidden max-w-7xl lg:block">
         <section className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_390px]">
-          <div className="overflow-hidden rounded-lg border border-white/10 bg-slate-950 shadow-[0_24px_90px_rgba(0,0,0,0.55)]">
+          <div className="command-header-card living-surface rounded-lg shadow-[0_24px_90px_rgba(0,0,0,0.55)]">
             <div className="h-1.5 bg-gradient-to-r from-cyan-300 via-blue-500 to-orange-300" />
-            <div className="p-5 sm:p-7 lg:p-8">
+            <div className="relative z-10 p-5 sm:p-7 lg:p-8">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="inline-flex w-fit items-center gap-2 rounded-full border border-cyan-300/25 bg-cyan-300/10 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.16em] text-cyan-100">
                   <FaRoute size={12} /> Start here
@@ -244,7 +335,7 @@ export default function Dashboard() {
                 <button
                   type="button"
                   onClick={() => setShowOnboarding(true)}
-                  className="inline-flex w-fit items-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-semibold text-slate-300 transition-all hover:border-cyan-300/40 hover:bg-cyan-300/10 hover:text-cyan-100"
+                  className="inline-flex w-fit items-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-semibold text-slate-300 transition-all hover:-translate-y-0.5 hover:border-cyan-300/40 hover:bg-cyan-300/10 hover:text-cyan-100"
                 >
                   <FaBolt size={11} /> Show tour
                 </button>
@@ -252,11 +343,51 @@ export default function Dashboard() {
 
               <div className="mt-8 max-w-4xl">
                 <h1 className="text-4xl font-black leading-[1.02] tracking-normal text-white sm:text-6xl lg:text-7xl">
-                  What do you want to build today?
+                  Command Center
                 </h1>
                 <p className="mt-5 max-w-2xl text-base leading-7 text-slate-400">
-                  Pick a simple path. Auto Nirman will guide you from raw project details to a report, estimate, or map you can actually use.
+                  Pick a path and move from raw project details to a report, estimate, map, or AI answer.
                 </p>
+              </div>
+
+              <div className="mt-7 rounded-lg border border-cyan-300/15 bg-slate-950/70 p-3 shadow-[0_0_34px_rgba(34,211,238,0.08)]">
+                <label className="flex items-center gap-3">
+                  <FaSearch className="text-cyan-200" size={16} />
+                  <input
+                    value={commandQuery}
+                    onChange={event => setCommandQuery(event.target.value)}
+                    onKeyDown={event => {
+                      if (event.key === 'Enter') runCommand();
+                    }}
+                    placeholder="Search command: cost, map, BOQ, chat..."
+                    className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-white outline-none placeholder:text-slate-600"
+                  />
+                  <button
+                    type="button"
+                    onClick={runCommand}
+                    className="rounded-md border border-cyan-300/20 bg-cyan-300/10 px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-cyan-100 transition-all hover:-translate-y-0.5 hover:bg-cyan-300/15"
+                  >
+                    Run
+                  </button>
+                </label>
+                {commandResults.length > 0 && (
+                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                    {commandResults.map(feature => (
+                      <button
+                        key={feature.title}
+                        type="button"
+                        onClick={() => openFeature(feature)}
+                        className="living-surface flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-white/[0.035] px-3 py-2 text-left transition-all hover:border-cyan-300/35 hover:bg-cyan-300/10"
+                      >
+                        <span>
+                          <span className="block text-sm font-bold text-white">{feature.title}</span>
+                          <span className="mt-0.5 block text-[11px] text-slate-500">{feature.action}</span>
+                        </span>
+                        <feature.icon className="shrink-0 text-cyan-100" size={15} />
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -303,6 +434,15 @@ export default function Dashboard() {
               </div>
             </div>
           </aside>
+        </section>
+
+        <section className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1fr)_390px]">
+          <ContinueWorkPanel
+            items={workspaceItems}
+            onOpen={route => router.push(route)}
+            onStart={route => router.push(route)}
+          />
+          <RecentActivityPanel items={workspaceItems} />
         </section>
 
         <section className="mt-6">
@@ -500,6 +640,100 @@ function LiveWorkspacePanel({ feature, onOpen }: { feature: DashboardFeature; on
         </button>
       </div>
     </motion.div>
+  );
+}
+
+function ContinueWorkPanel({
+  items,
+  onOpen,
+  onStart,
+}: {
+  items: WorkspaceItem[];
+  onOpen: (route: string) => void;
+  onStart: (route: string) => void;
+}) {
+  const starters = [
+    { title: 'New estimate', detail: 'Get a budget range fast', route: '/dashboard/cost-estimator', Icon: FaCalculator, tone: 'from-emerald-300 to-cyan-300' },
+    { title: 'New floor plan', detail: 'Generate a plot-aware layout', route: '/dashboard/2d-map-generator', Icon: FaMap, tone: 'from-orange-300 to-cyan-300' },
+    { title: 'Ask AI', detail: 'Get construction guidance', route: '/chatbot', Icon: FaRobot, tone: 'from-violet-300 to-fuchsia-300' },
+  ];
+
+  const visibleItems = items.length ? items : starters.map(item => ({
+    title: item.title,
+    label: 'Start now',
+    route: item.route,
+    action: 'Open',
+    Icon: item.Icon,
+    tone: item.tone,
+    detail: item.detail,
+  }));
+
+  return (
+    <section className="premium-console-card rounded-lg p-5">
+      <div className="relative z-10">
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-100">Continue work</p>
+            <h2 className="mt-2 text-2xl font-black text-white">{items.length ? 'Resume your workspace' : 'Start your first project'}</h2>
+          </div>
+          <span className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-cyan-100">
+            {items.length ? `${items.length} active` : 'Ready'}
+          </span>
+        </div>
+        <div className="mt-5 grid gap-3 md:grid-cols-3">
+          {visibleItems.map(item => (
+            <button
+              key={`${item.title}-${item.route}`}
+              type="button"
+              onClick={() => (items.length ? onOpen(item.route) : onStart(item.route))}
+              className="living-surface group rounded-lg border border-white/10 bg-white/[0.035] p-4 text-left transition-all hover:-translate-y-1 hover:border-cyan-300/35 hover:bg-cyan-300/10"
+            >
+              <div className={`mb-4 h-1.5 w-16 rounded-full bg-gradient-to-r ${item.tone}`} />
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-sm font-black text-white">{item.title}</p>
+                  <p className="mt-2 text-xs leading-5 text-slate-500">{item.detail}</p>
+                  <p className="mt-3 text-xs font-bold text-cyan-100">{item.action}</p>
+                </div>
+                <item.Icon className="shrink-0 text-cyan-100 transition-transform group-hover:scale-110" size={18} />
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function RecentActivityPanel({ items }: { items: WorkspaceItem[] }) {
+  const activity = items.length ? items : [
+    { title: 'Workspace ready', detail: 'No saved outputs yet. Start with cost, map, or BOQ.', Icon: FaBolt },
+    { title: 'AI assistant online', detail: 'Construction guidance is available anytime.', Icon: FaRobot },
+    { title: 'Exports enabled', detail: 'Reports, estimates, and plans can be downloaded.', Icon: FaCheckCircle },
+  ];
+
+  return (
+    <aside className="rounded-lg border border-white/10 bg-slate-950/85 p-5 shadow-[0_24px_90px_rgba(0,0,0,0.45)]">
+      <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Recent activity</p>
+      <div className="mt-4 space-y-3">
+        {activity.map((item, index) => {
+          const Icon = item.Icon;
+          return (
+            <div key={`${item.title}-${index}`} className="living-surface rounded-lg border border-white/10 bg-white/[0.035] p-3">
+              <div className="flex gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-cyan-300/15 bg-cyan-300/10 text-cyan-100">
+                  <Icon size={15} />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-white">{item.title}</p>
+                  <p className="mt-1 text-xs leading-5 text-slate-500">{item.detail}</p>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </aside>
   );
 }
 

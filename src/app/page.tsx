@@ -74,7 +74,13 @@ function DesktopHome({ push, openTour }: { push: (href: string) => void; openTou
   return (
     <div className="relative z-10 hidden md:block">
       <section className="mx-auto grid min-h-screen max-w-7xl grid-cols-[minmax(0,0.9fr)_minmax(420px,1.1fr)] items-center gap-8 px-6 pb-16 pt-24 lg:px-8">
-        <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
+        <motion.div
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7 }}
+          className="command-header-card living-surface rounded-lg p-7"
+        >
+          <div className="relative z-10">
           <div className="inline-flex items-center gap-3 rounded-full border border-cyan-300/25 bg-cyan-300/10 px-4 py-2 text-xs font-black uppercase tracking-[0.16em] text-cyan-100">
             <span className="h-2 w-2 rounded-full bg-emerald-300 shadow-[0_0_18px_rgba(110,231,183,0.75)]" />
             Built for Indian construction teams
@@ -120,11 +126,12 @@ function DesktopHome({ push, openTour }: { push: (href: string) => void; openTou
 
           <div className="mt-9 grid max-w-2xl grid-cols-3 gap-3">
             {proof.map(item => (
-              <div key={item.label} className="rounded-lg border border-white/10 bg-slate-950 px-4 py-4">
+              <div key={item.label} className="rounded-lg border border-white/10 bg-slate-950/80 px-4 py-4 transition-all hover:-translate-y-1 hover:border-cyan-300/30">
                 <p className="text-3xl font-black text-white">{item.value}</p>
                 <p className="mt-1 text-xs font-semibold text-slate-500">{item.label}</p>
               </div>
             ))}
+          </div>
           </div>
         </motion.div>
 

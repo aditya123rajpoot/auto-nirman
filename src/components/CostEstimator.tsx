@@ -224,7 +224,7 @@ function LiveCostPreview({ input, coverage }: { input: EstimateInput; coverage: 
   const signal = coverage > 90 ? 'High site coverage' : coverage > 65 ? 'Balanced coverage' : 'Low coverage'
 
   return (
-    <div className="living-surface overflow-hidden rounded-lg border border-cyan-300/15 bg-slate-950/75 p-4 shadow-2xl shadow-cyan-950/20">
+    <div className="premium-console-card living-surface rounded-lg border-cyan-300/15 p-4 shadow-2xl shadow-cyan-950/20">
       <div className="live-grid absolute inset-0 opacity-20" />
       <div className="relative z-10">
         <div className="flex items-start justify-between gap-4">
@@ -254,6 +254,25 @@ function LiveCostPreview({ input, coverage }: { input: EstimateInput; coverage: 
         <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10">
           <div className="h-full rounded-full bg-gradient-to-r from-emerald-300 via-cyan-300 to-amber-300 transition-all duration-500" style={{ width: `${Math.min(100, Math.max(16, coverage))}%` }} />
         </div>
+      </div>
+    </div>
+  )
+}
+
+function MobileProgressStrip({ current }: { current: number }) {
+  const steps = ['Area', 'Type', 'Quality', 'Estimate'];
+  return (
+    <div className="mb-5 rounded-lg border border-white/10 bg-slate-950/80 p-3 lg:hidden">
+      <div className="grid grid-cols-4 gap-2">
+        {steps.map((step, index) => {
+          const active = index <= current;
+          return (
+            <div key={step} className="min-w-0">
+              <div className={`h-1.5 rounded-full transition-colors ${active ? 'bg-cyan-300 shadow-[0_0_14px_rgba(34,211,238,0.42)]' : 'bg-white/10'}`} />
+              <p className={`mt-2 truncate text-center text-[10px] font-black uppercase tracking-[0.12em] ${active ? 'text-cyan-100' : 'text-slate-600'}`}>{step}</p>
+            </div>
+          );
+        })}
       </div>
     </div>
   )
@@ -295,7 +314,7 @@ export function CostEstimateResult({ stored }: { stored: StoredEstimate }) {
             <Sparkles size={14} /> Estimate dossier
           </div>
           <h1 className="max-w-4xl text-4xl font-bold tracking-normal text-white sm:text-6xl">
-            Your construction cost view is ready.
+            Cost View Ready
           </h1>
           <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-400 sm:text-base">
             Built from {input.builtSqft.toLocaleString('en-IN')} sq ft across {input.floors} floor{input.floors > 1 ? 's' : ''}, using {result.cityLabel} pricing assumptions.
@@ -441,21 +460,32 @@ export default function CostEstimator({ apiUrl }: { apiUrl?: string }) {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mb-7 grid gap-5 lg:grid-cols-[1fr_360px] lg:items-end">
-        <div>
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-cyan-100">
-            <Sparkles size={14} /> Auto Nirman estimating studio
+    <div className="mx-auto max-w-6xl px-4 pb-28 pt-8 sm:px-6 lg:px-8 lg:pb-8">
+      <div className="mb-7 grid gap-5 lg:grid-cols-[1fr_360px] lg:items-stretch">
+        <div className="command-header-card living-surface rounded-lg p-5 sm:p-7">
+          <div className="relative z-10">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-cyan-100">
+              <span className="pulse-dot h-1.5 w-1.5 rounded-full bg-cyan-300" />
+              <Sparkles size={14} /> Auto Nirman estimating studio
+            </div>
+            <h1 className="max-w-4xl text-4xl font-black tracking-normal text-white sm:text-6xl">
+              Cost Estimator
+            </h1>
+            <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-400 sm:text-base">
+              Shape a construction budget from area, city, quality, floors, and project scope before the first site visit.
+            </p>
+            <div className="mt-6 grid gap-2 sm:grid-cols-3">
+              {['Live cost pulse', 'Material quality logic', 'Exportable dossier'].map(item => (
+                <div key={item} className="rounded-lg border border-white/10 bg-white/[0.035] px-3 py-2 text-xs font-bold text-slate-300 transition-all hover:-translate-y-0.5 hover:border-cyan-300/35">
+                  {item}
+                </div>
+              ))}
+            </div>
           </div>
-          <h1 className="max-w-4xl text-4xl font-bold tracking-normal text-white sm:text-6xl">
-            Build cost clarity before the first site visit.
-          </h1>
-          <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-400 sm:text-base">
-            Enter the project profile here. The full estimate opens separately as a clean result dossier.
-          </p>
         </div>
 
-        <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4 backdrop-blur">
+        <div className="premium-console-card living-surface rounded-lg p-4 backdrop-blur">
+          <div className="relative z-10">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Current input profile</p>
           <div className="mt-4 grid grid-cols-3 gap-3 text-center">
             <div>
@@ -471,14 +501,17 @@ export default function CostEstimator({ apiUrl }: { apiUrl?: string }) {
               <p className="mt-1 text-xs text-slate-500">floors</p>
             </div>
           </div>
+          </div>
         </div>
       </div>
 
       <div className="mb-6">
         <LiveCostPreview input={input} coverage={coverage} />
       </div>
+      <MobileProgressStrip current={quality ? 3 : houseType ? 2 : 1} />
 
-      <div className="overflow-hidden rounded-lg border border-white/10 bg-slate-950/70 shadow-2xl shadow-black/40 backdrop-blur">
+      <div className="premium-console-card rounded-lg shadow-2xl shadow-black/40 backdrop-blur">
+        <div className="relative z-10">
         <div className="border-b border-white/10 bg-white/[0.035] px-5 py-4 sm:px-6">
           <div className="flex items-center justify-between gap-4">
             <div>
@@ -579,17 +612,29 @@ export default function CostEstimator({ apiUrl }: { apiUrl?: string }) {
           </section>
         </div>
 
-        <div className="border-t border-white/10 bg-black/20 p-5 sm:p-6">
+        <div className="hidden border-t border-white/10 bg-black/20 p-5 sm:p-6 lg:block">
           <button
             type="button"
             onClick={handleSubmit}
             disabled={loading}
             className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-cyan-300 px-5 py-3.5 text-sm font-bold text-slate-950 transition-colors hover:bg-cyan-200 disabled:cursor-wait disabled:opacity-70"
           >
-            {loading ? 'Calculating estimate...' : 'Generate estimate and open result'}
+            {loading ? 'Calculating...' : 'Generate Estimate'}
             <ChevronRight size={18} />
           </button>
         </div>
+        </div>
+      </div>
+
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-cyan-300/15 bg-slate-950/92 p-3 shadow-[0_-18px_50px_rgba(0,0,0,0.45)] backdrop-blur-xl lg:hidden">
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={loading}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-cyan-300 px-5 py-3.5 text-sm font-black text-slate-950 shadow-[0_0_30px_rgba(34,211,238,0.24)] active:scale-[0.98] disabled:opacity-60"
+        >
+          {loading ? 'Calculating...' : 'Generate Estimate'} <ChevronRight size={18} />
+        </button>
       </div>
     </div>
   )

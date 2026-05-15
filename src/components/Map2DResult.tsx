@@ -92,7 +92,7 @@ export default function Map2DResult() {
             <div className="h-full w-full animate-spin rounded-full border-2 border-cyan-300/20 border-t-cyan-200" />
           </div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-100">Rendering result</p>
-          <h1 className="mt-3 text-2xl font-bold text-white">Preparing your clean JPEG map</h1>
+          <h1 className="mt-3 text-2xl font-bold text-white">Preparing Plan</h1>
           <div className="mt-5 grid gap-2 text-left">
             {['Optimizing labels', 'Drawing room boundaries', 'Loading AI assistant checks'].map(item => (
               <div key={item} className="rounded-lg border border-white/10 bg-white/[0.035] px-4 py-3 text-sm text-slate-300">
@@ -140,7 +140,7 @@ export default function Map2DResult() {
             {conceptTitle}
           </h1>
           <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-400 sm:text-base">
-            JPEG-ready floor plan with validated geometry, room scheduling, and AI design checks for client review.
+            Export-ready floor plan with validated geometry, room scheduling, and AI design checks.
           </p>
           {resultSummary && (
             <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
