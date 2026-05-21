@@ -1,4 +1,4 @@
-import FutureHomeWalkthrough from '@/components/FutureHomeWalkthrough';
+import RealisticRoomTour from '@/components/tour/RealisticRoomTour';
 
 function WalkthroughBackdrop() {
   return (
@@ -20,7 +20,7 @@ export default function FutureHomeWalkthroughPage() {
   return (
     <main className="relative min-h-screen pt-20 text-white">
       <WalkthroughBackdrop />
-      <FutureHomeWalkthrough />
+      <RealisticRoomTour />
     </main>
   );
 }

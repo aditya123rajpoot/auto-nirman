@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { postToBackend } from '@/lib/backend';
+import { AUTO_NIRMAN_MAP_SYSTEM_PROMPT, GROQ_CACHE_MODEL, getGroqCachedTokens } from '@/lib/groqPrompts';
 import type { Map2DAIPlan, Map2DInput } from '@/types/map2d';
 
 function fallbackPlan(input: Map2DInput): Map2DAIPlan {
@@ -63,6 +65,12 @@ function sanitizePlan(plan: Map2DAIPlan, input: Map2DInput): Map2DAIPlan {
 export async function POST(request: Request) {
   try {
     const input = (await request.json()) as Map2DInput;
+    const backendResult = await postToBackend('/api/v1/map2d/ai-plan', input);
+
+    if (backendResult) {
+      return NextResponse.json(backendResult);
+    }
+
     const polygon = input.plotPolygon;
     const bounds = polygon?.length
       ? polygon.reduce(
@@ -87,14 +95,13 @@ export async function POST(request: Request) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
+        model: GROQ_CACHE_MODEL,
         temperature: 0.35,
         response_format: { type: 'json_object' },
         messages: [
           {
             role: 'system',
-            content:
-              'You are Auto Nirman AI, an Indian residential floor-plan planning assistant. Return only valid JSON matching this schema: { "conceptTitle": string, "strategy": "open_living" | "privacy_first" | "compact_core" | "premium_family", "roomEmphasis": "living" | "bedrooms" | "balanced", "recommendedRooms": string[], "rooms": [{ "label": string, "type": "living" | "kitchen" | "bedroom" | "bath" | "parking" | "stair" | "dining" | "utility" | "circulation" | "court" | "balcony" | "store", "x": number, "y": number, "width": number, "height": number }], "designNotes": string[], "scoreAdjustments": { "efficiency"?: number, "vastu"?: number, "circulation"?: number, "daylight"?: number } }. Coordinates are in feet with x/y from the top-left of the plot box. Rooms must fit within the plot dimensions, avoid obvious overlap, include requested bedrooms and bathrooms, and stay practical for Indian residential planning. Very important: use the full buildable plot as much as possible. Do not cluster all rooms in one corner. Spread rooms across frontage and depth, target 80-95 percent planned coverage for small residential plots, and convert leftover irregular pockets into named useful zones like court, balcony, store, sitout, or circulation. Keep notes practical and premium. Do not include legal/structural approval claims.',
+            content: AUTO_NIRMAN_MAP_SYSTEM_PROMPT,
           },
           {
             role: 'user',
@@ -122,12 +129,14 @@ export async function POST(request: Request) {
 
     const data = await groqRes.json();
     const content = data?.choices?.[0]?.message?.content;
+    const cache = getGroqCachedTokens(data);
+    console.log('Groq map cache usage:', cache);
 
     if (!groqRes.ok || !content) {
       return NextResponse.json({ success: true, aiPlan: fallbackPlan(input), source: 'fallback' });
     }
 
-    return NextResponse.json({ success: true, aiPlan: sanitizePlan(parseAIJson(content), input), source: 'groq' });
+    return NextResponse.json({ success: true, aiPlan: sanitizePlan(parseAIJson(content), input), source: 'groq', cache });
   } catch {
     return NextResponse.json({ success: false, error: 'AI map planning failed.' }, { status: 500 });
   }
